@@ -1,0 +1,7 @@
+# Twickenham Health — Locum GP Invoice App
+# Install all dependencies with:
+#   pip install -r requirements.txt
+
+reportlab
+pillow
+pyinstaller
