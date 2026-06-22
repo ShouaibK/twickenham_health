@@ -32,7 +32,7 @@ class Dashboard(tk.Frame):
 
     def __init__(self, parent, on_new, on_open, on_edit, *args, **kwargs):
         super().__init__(parent, bg=LIGHT_GREY, *args, **kwargs)
-        self._logo_image = load_logo_image(size=(40, 40))
+        self._logo_image = load_logo_image(size=(52, 52))
 
         # Callbacks injected from main.py
         self.on_new  = on_new    # open blank invoice form
@@ -51,7 +51,7 @@ class Dashboard(tk.Frame):
     # ──────────────────────────────────────────
 
     def _build_topbar(self):
-        bar = tk.Frame(self, bg=NAVY, height=64)
+        bar = tk.Frame(self, bg=NAVY, height=78)
         bar.pack(fill="x")
         bar.pack_propagate(False)
 
@@ -64,7 +64,7 @@ class Dashboard(tk.Frame):
                             relief="flat")
         else:
             icon = tk.Label(left, text="✚", bg=NAVY, fg=WHITE,
-                            font=("Segoe UI", 12, "bold"),
+                            font=("Segoe UI", 13, "bold"),
                             width=2, relief="flat")
         icon.pack(side="left", padx=(0, 8))
 
@@ -72,10 +72,10 @@ class Dashboard(tk.Frame):
         title_frame.pack(side="left")
         tk.Label(title_frame, text="Twickenham Health Limited",
                  bg=NAVY, fg=WHITE,
-                 font=("Segoe UI", 11, "bold")).pack(anchor="w")
+                 font=("Segoe UI", 14, "bold")).pack(anchor="w")
         tk.Label(title_frame, text="Locum GP Invoice Manager",
                  bg=NAVY, fg="#aab8cc",
-                 font=FONT_SMALL).pack(anchor="w")
+                 font=("Segoe UI", 10)).pack(anchor="w")
 
         # Reg number on the right
         tk.Label(bar, text="Reg. No: 16271052",
