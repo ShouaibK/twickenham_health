@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v1.6 (Production Ready)
+v1.7 (Production Ready)
 
 
 
@@ -136,7 +136,15 @@ CREATE TABLE sessions (
 
 ### 1. Dashboard (dashboard.py)
 - Toolbar buttons: New Invoice | Open | Generate PDF | Print | Delete
-- Records table columns: Invoice No. | Invoice Date | Due Date | Customer | Sessions | Net Amount | Due Amount | Status
+- Records table columns: ☐ | Invoice No. | Invoice Date | Due Date | Customer | Sessions | Net Amount | Due Amount | Status
+- First column is a **checkbox column** (`"check"`) for multi-selection:
+  - Clicking the checkbox cell toggles `☐` / `☑` for that row
+  - Checked IDs are stored in `self._checked` (a `set` of string iids)
+  - `_checked_ids()` returns a `list[int]` of all checked database IDs
+  - Double-clicking the checkbox column is ignored (does not open invoice)
+  - Single-row selection via `_selected_id()` is fully independent and untouched
+  - `self._checked` is preserved across `refresh()` calls — checked state survives data reloads
+  - Column width: `30px`, non-stretching, no sort on click
 - Row hover actions: Eye (view) | PDF | Print | Edit
 - Status bar: Total invoices | Paid | Pending | Total earned
 - Search bar: filter by invoice no., date, or customer

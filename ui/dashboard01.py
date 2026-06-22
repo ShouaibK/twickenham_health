@@ -39,8 +39,6 @@ class Dashboard(tk.Frame):
         self.on_open = on_open   # open invoice view screen
         self.on_edit = on_edit   # open invoice form pre-filled
 
-        self._checked = set()   # set of iids that are checkbox-checked
-
         self._build_topbar()
         self._build_table()
         self._build_statusbar()
@@ -113,7 +111,7 @@ class Dashboard(tk.Frame):
         btn(bar, "📤  Generate PDF",  self._generate_pdf,     fg=WHITE, bg=GREEN)
         tk.Frame(bar, bg=MID_GREY, width=1).pack(side="right", fill="y", padx=4)
         btn(bar, "📄  Open",          self._open_selected)
-        btn(bar, "＋  New Invoice",   self.on_new,            fg=WHITE, bg=NAVY)
+        btn(bar, " +  New Invoice",   self.on_new,            fg=WHITE, bg=NAVY)
 
         # Search on the left
         search_frame = tk.Frame(bar, bg=WHITE)
@@ -144,7 +142,6 @@ class Dashboard(tk.Frame):
         hsb = ttk.Scrollbar(container, orient="horizontal")
 
         columns = (
-            "check",
             "inv_no", "inv_date", "due_date",
             "customer", "sessions",
             "net_amount", "due_amount", "status"
@@ -163,7 +160,6 @@ class Dashboard(tk.Frame):
 
         # Column headings & widths
         col_cfg = {
-            "check":      ("",              30, "center"),
             "inv_no":     ("Invoice No.",   100, "center"),
             "inv_date":   ("Invoice Date",  100, "center"),
             "due_date":   ("Due Date",      100, "center"),
@@ -175,10 +171,8 @@ class Dashboard(tk.Frame):
         }
         for col, (heading, width, anchor) in col_cfg.items():
             self._tree.heading(col, text=heading,
-                               command=lambda c=col: self._sort(c) if c != "check" else None)
-            self._tree.column(col, width=width, anchor=anchor,
-                              minwidth=30 if col == "check" else 60,
-                              stretch=col != "check")
+                               command=lambda c=col: self._sort(c))
+            self._tree.column(col, width=width, anchor=anchor, minwidth=60)
 
         # Style
         style = ttk.Style()
@@ -206,11 +200,8 @@ class Dashboard(tk.Frame):
         self._tree.tag_configure("paid",    foreground=GREEN)
         self._tree.tag_configure("overdue", foreground=RED)
 
-        # Double-click to open (only when not clicking checkbox column)
-        self._tree.bind("<Double-1>", self._on_double_click)
-
-        # Single-click to toggle checkbox
-        self._tree.bind("<ButtonRelease-1>", self._on_click)
+        # Double-click to open
+        self._tree.bind("<Double-1>", lambda e: self._open_selected())
 
         self._tree.grid(row=0, column=0, sticky="nsew")
         vsb.grid(row=0, column=1, sticky="ns")
@@ -290,7 +281,6 @@ class Dashboard(tk.Frame):
             self._tree.insert("", "end",
                 iid=item_id,
                 values=(
-                    "☑" if item_id in self._checked else "☐",
                     inv["inv_no"],
                     format_date_for_display(inv["inv_date"]),
                     format_date_for_display(inv["due_date"]),
@@ -318,35 +308,6 @@ class Dashboard(tk.Frame):
     # ──────────────────────────────────────────
     #  HELPERS
     # ──────────────────────────────────────────
-
-    def _on_click(self, event):
-        """Toggle checkbox when the check column is clicked; otherwise leave single-row selection alone."""
-        region = self._tree.identify_region(event.x, event.y)
-        if region != "cell":
-            return
-        col = self._tree.identify_column(event.x)
-        if col != "#1":          # #1 = first column = "check"
-            return
-        iid = self._tree.identify_row(event.y)
-        if not iid:
-            return
-        if iid in self._checked:
-            self._checked.discard(iid)
-            self._tree.set(iid, "check", "☐")
-        else:
-            self._checked.add(iid)
-            self._tree.set(iid, "check", "☑")
-
-    def _on_double_click(self, event):
-        """Open invoice on double-click, but ignore double-clicks on the checkbox column."""
-        col = self._tree.identify_column(event.x)
-        if col == "#1":          # ignore double-click on checkbox
-            return
-        self._open_selected()
-
-    def _checked_ids(self):
-        """Return list of database ids that are checkbox-checked. Returns empty list if none."""
-        return [int(iid) for iid in self._checked]
 
     def _selected_id(self):
         """Return the database id of the selected row, or None."""
