@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v1.9 (Production Ready)
+v2.0 (Production Ready)
 
 
 
@@ -102,18 +102,25 @@ Address        : Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom
 
 ### Table: invoices
 ```sql
-CREATE TABLE invoices (
+CREATE TABLE IF NOT EXISTS invoices (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    inv_no      TEXT NOT NULL UNIQUE,
-    inv_date    TEXT NOT NULL,
-    due_date    TEXT NOT NULL,
-    ref         TEXT,
-    net_amount  REAL NOT NULL,
-    due_amount  REAL NOT NULL,
-    status      TEXT DEFAULT 'pending',  -- pending | paid | overdue
-    created_at  TEXT DEFAULT CURRENT_TIMESTAMP
+    inv_no      TEXT    NOT NULL UNIQUE,
+    inv_date    TEXT    NOT NULL,
+    due_date    TEXT    NOT NULL,
+    ref         TEXT    DEFAULT '',
+    net_amount  REAL    NOT NULL DEFAULT 0.0,
+    due_amount  REAL    NOT NULL DEFAULT 0.0,
+    status      TEXT    NOT NULL DEFAULT 'pending',
+    customer_id INTEGER DEFAULT NULL,
+    created_at  TEXT    DEFAULT CURRENT_TIMESTAMP
 );
 ```
+- `customer_id` is a FK to `customers.id` (LEFT JOIN — **never hardcode customer name anywhere**)
+- `get_all_invoices()` and `get_invoice_by_id()` both JOIN customers and return:
+  `customer_name`, `customer_address`, `customer_contact`
+- All UI files must use `inv["customer_name"]` — never the string "Allen Street Clinic"
+- Migration: `ALTER TABLE invoices ADD COLUMN customer_id` runs safely on existing DBs
+- Back-fill: existing invoices with `customer_id IS NULL` auto-assigned to first customer
 
 ### Table: customers
 ```sql
