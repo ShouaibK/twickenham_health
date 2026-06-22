@@ -16,10 +16,17 @@ class App(tk.Tk):
 
         screen_w = self.winfo_screenwidth()
         screen_h = self.winfo_screenheight()
-        target_w = int(screen_w * 0.85)
-        target_h = int(screen_h * 0.85)
-        pos_x = int((screen_w - target_w) / 2)
-        pos_y = int(screen_h * 0.04)
+
+        # 4% padding on every side; bottom excludes Windows taskbar (~40px)
+        pad_x    = int(screen_w * 0.04)
+        pad_top  = int(screen_h * 0.04)
+        taskbar  = 40                          # typical Windows taskbar height
+        pad_bot  = int(screen_h * 0.04) + taskbar
+
+        target_w = screen_w - pad_x * 2
+        target_h = screen_h - pad_top - pad_bot
+        pos_x    = pad_x
+        pos_y    = pad_top
 
         self.geometry(f"{target_w}x{target_h}+{pos_x}+{pos_y}")
         self.minsize(target_w, target_h)
