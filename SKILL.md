@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v1.8 (Production Ready)
+v1.9 (Production Ready)
 
 
 
@@ -115,6 +115,19 @@ CREATE TABLE invoices (
 );
 ```
 
+### Table: customers
+```sql
+CREATE TABLE IF NOT EXISTS customers (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    address    TEXT DEFAULT '',
+    contact    TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+- Seeded on first run with Allen Street Clinic as the default customer
+- CRUD via: `get_all_customers()`, `get_customer_by_id()`, `add_customer()`, `update_customer()`, `delete_customer()`
+
 ### Table: sessions
 ```sql
 CREATE TABLE sessions (
@@ -178,7 +191,20 @@ CREATE TABLE sessions (
 - Warning: action cannot be undone
 - Buttons: Cancel | Yes, Delete Invoice
 
-### 5. PDF Preview (pdf_preview.py)
+### 5. Customer Manager (ui/customer_manager.py)
+- Accessed via **👥 Customers** button in dashboard toolbar
+- Split layout: customer list table (left) + add/edit form (right)
+- Fields: Customer Name (required) | Address (multi-line) | Contact
+- Actions: Save Customer | Clear | Delete (enabled only when editing)
+- On first run, Allen Street Clinic is seeded as the default customer
+- **Back to Dashboard** button at bottom toolbar
+- Customer count shown in bottom-right status label
+
+### 6. Bill To dropdown (invoice_form.py)
+- **Bill To** card now uses a dropdown (`ttk.Combobox`) populated from `customers` table
+- Selecting a customer auto-fills Address and Contact fields (read-only)
+- `_reload_customers()` fetches fresh data from DB each time the form loads
+- Customer name, address, contact stored in `self._customer_var`, `self._customer_map`
 - Opens generated PDF in Windows default viewer
 - Or prints directly via printer.py
 
@@ -267,6 +293,9 @@ pause
 | Change bank details         | This SKILL.md + pdf_generator.py|
 | Change status options       | dashboard.py + db.py            |
 | Change window size/padding  | main.py (Window Layout section) |
+| Add / edit customers        | ui/customer_manager.py          |
+| Change customer dropdown    | ui/invoice_form.py (_bill_to_card) |
+| Add customer DB columns     | database/db.py (schema + queries) |
 
 
 
