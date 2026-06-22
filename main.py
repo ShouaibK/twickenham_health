@@ -6,6 +6,7 @@ from ui import load_logo_image
 from ui.dashboard import Dashboard
 from ui.invoice_form import InvoiceForm
 from ui.invoice_view import InvoiceView
+from ui.customer_manager import CustomerManager
 
 
 class App(tk.Tk):
@@ -53,8 +54,16 @@ class App(tk.Tk):
             on_new=self.open_invoice_form,
             on_open=self.open_invoice_view,
             on_edit=self.open_invoice_form,
+            on_customers=self.open_customer_manager,
         )
         self._show_screen(dashboard)
+
+    def open_customer_manager(self):
+        manager = CustomerManager(
+            self._container,
+            on_close=self.show_dashboard,
+        )
+        self._show_screen(manager)
 
     def open_invoice_form(self, invoice_id=None):
         form = InvoiceForm(
