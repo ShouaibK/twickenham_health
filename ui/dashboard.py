@@ -347,7 +347,7 @@ class Dashboard(tk.Frame):
         invoice = db.get_invoice_by_id(inv_id)
         if not invoice:
             return
-        from logic.printer import generate_and_open
+        from logic.pdf_generator import generate_and_open
         ok, result = generate_and_open(invoice)
         if ok:
             messagebox.showinfo("PDF Generated",
@@ -356,18 +356,52 @@ class Dashboard(tk.Frame):
             messagebox.showerror("PDF Error", result)
 
     def _print_selected(self):
-        inv_id = self._selected_id()
-        if not inv_id:
+        """
+        Print the current records table as a PDF report.
+        Respects the active search filter — only prints visible records.
+        """
+        search   = self._search_var.get().strip() \
+                   if hasattr(self, "_search_var") else ""
+        invoices = db.get_all_invoices(search)
+
+        if not invoices:
+            messagebox.showwarning(
+                "No Records",
+                "There are no records to print."
+            )
             return
-        invoice = db.get_invoice_by_id(inv_id)
-        if not invoice:
+
+        count = len(invoices)
+        label = f"filtered " if search else ""
+        confirm = messagebox.askyesno(
+            "Print Records",
+            f"Print {count} {label}record(s) as a PDF report?\n\n"
+            f"Company : Twickenham Health Limited\n"
+            f"Records : {count} invoice(s)\n\n"
+            "A PDF will be generated and opened for printing.",
+        )
+        if not confirm:
             return
-        from logic.printer import generate_and_print
-        ok, result = generate_and_print(invoice)
-        if ok:
-            messagebox.showinfo("Print", "Invoice sent to printer.")
-        else:
-            messagebox.showerror("Print Error", result)
+
+        try:
+            from logic.records_report import generate_records_pdf
+            from logic.pdf_generator import open_pdf
+            title    = "Invoice Records Report"
+            if search:
+                title = f"Invoice Records Report — Filter: '{search}'"
+            pdf_path = generate_records_pdf(invoices, title=title)
+            open_pdf(pdf_path)
+            messagebox.showinfo(
+                "Records Report",
+                f"PDF opened successfully.\n\n"
+                f"Use File → Print inside your PDF viewer to print.\n\n"
+                f"Saved at:\n{pdf_path}"
+            )
+        except Exception as e:
+            messagebox.showerror(
+                "Print Error",
+                f"Could not generate records report:\n{str(e)}"
+            )
 
     def _delete_selected(self):
         inv_id = self._selected_id()

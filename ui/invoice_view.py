@@ -4,7 +4,7 @@ from datetime import datetime
 
 from database import db
 from logic.invoice_logic import format_currency, format_date_for_display
-from logic.printer import generate_and_open, generate_and_print
+from logic.pdf_generator import generate_and_open, generate_and_print
 from ui import load_logo_image
 
 
@@ -86,15 +86,19 @@ class InvoiceView(tk.Frame):
 
         right = tk.Frame(bar, bg=NAVY)
         right.pack(side="right", padx=14)
-        self._btn(right, "✖  Close", self.on_close,
+        self._btn(right, "✖  Close",        self.on_close,
                   bg=NAVY, fg=WHITE, bd=1,
                   hl="#aab8cc").pack(side="left", padx=4)
-        self._btn(right, "✎  Edit", self._on_edit,
+        self._btn(right, "✎  Edit",         self._on_edit,
+                  bg=WHITE, fg=TEXT_DARK).pack(side="left", padx=4)
+        self._btn(right, "📤  Generate PDF", self.generate_pdf,
+                  bg=GREEN, fg=WHITE).pack(side="left", padx=4)
+        self._btn(right, "🖨  Print",        self.print_invoice,
                   bg=WHITE, fg=TEXT_DARK).pack(side="left", padx=4)
         self._mark_btn = self._btn(right, "Mark as Paid", self._toggle_paid,
                                    bg=GREEN, fg=WHITE)
         self._mark_btn.pack(side="left", padx=4)
-        self._btn(right, "🗑  Delete", self._delete_invoice,
+        self._btn(right, "🗑  Delete",       self._delete_invoice,
                   bg=WHITE, fg=RED).pack(side="left", padx=4)
 
     def _build_body(self):
