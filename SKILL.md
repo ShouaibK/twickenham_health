@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v1.7 (Production Ready)
+v1.8 (Production Ready)
 
 
 
@@ -138,13 +138,19 @@ CREATE TABLE sessions (
 - Toolbar buttons: New Invoice | Open | Generate PDF | Print | Delete
 - Records table columns: ☐ | Invoice No. | Invoice Date | Due Date | Customer | Sessions | Net Amount | Due Amount | Status
 - First column is a **checkbox column** (`"check"`) for multi-selection:
-  - Clicking the checkbox cell toggles `☐` / `☑` for that row
-  - Checked IDs are stored in `self._checked` (a `set` of string iids)
+  - Header shows `☐` / `☑` — clicking it toggles ALL rows on/off (select-all / deselect-all)
+  - Header auto-updates to `☑` when every row is individually checked, back to `☐` when any is unchecked
+  - Clicking a row's checkbox cell toggles `☐` / `☑` for that row only
+  - Checked IDs are stored in `self._checked` (a `set` of string iids); `self._all_checked` (bool) tracks header state
   - `_checked_ids()` returns a `list[int]` of all checked database IDs
   - Double-clicking the checkbox column is ignored (does not open invoice)
   - Single-row selection via `_selected_id()` is fully independent and untouched
   - `self._checked` is preserved across `refresh()` calls — checked state survives data reloads
   - Column width: `30px`, non-stretching, no sort on click
+- **Print button behaviour:**
+  - If any checkboxes are ticked → prints only those checked invoices
+  - If no checkboxes are ticked → falls back to the single selected row
+  - Confirmation dialog shows the mode clearly (`X checked invoice(s)` or `1 selected invoice (THL-GP###)`)
 - Row hover actions: Eye (view) | PDF | Print | Edit
 - Status bar: Total invoices | Paid | Pending | Total earned
 - Search bar: filter by invoice no., date, or customer
