@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v1.5 (Production Ready)
+v1.6 (Production Ready)
 
 
 
@@ -256,7 +256,19 @@ pause
 
 
 
-## Things Claude Must Never Change Without Being Asked
+## Git Commit Convention
+- Always use **separate commits per file**, never bundle multiple files in one commit
+- Always use **separate `git push`** after each commit
+- Format:
+  ```bash
+  git add <file>
+  git commit -m "<type>: <description>"
+  git push
+
+  git add <file>
+  git commit -m "<type>: <description>"
+  git push
+  ```
 - Company name, address, phone, reg number
 - Bank details (MONZO, 99909112, 04-00-03)
 - Customer name and address (Allen Street Clinic)
