@@ -1,340 +1,259 @@
 ---
-name: twickenham_health
-description: >
-  Use this skill whenever working on the Twickenham Health Limited Locum GP
-  Invoice desktop application. Covers all coding tasks including UI screens,
-  database operations, PDF generation, records report, printing, packaging
-  to .exe, and maintenance tasks.
-
-  Trigger when the user mentions: invoices, sessions, locum GP, THL-GP,
-  Twickenham Health, dashboard, invoice form, invoice view, pdf generator,
-  records report, SQLite db, or any of the project files (main.py, db.py,
-  pdf_generator.py, dashboard.py, invoice_form.py, invoice_view.py,
-  records_report.py, invoice_logic.py, build.bat etc).
+name: twickenham-health-invoice-app
+description: "Use this skill whenever working on the Twickenham Health Limited Locum GP Invoice desktop application. Covers all coding tasks including UI screens, database operations, PDF generation, printing, packaging, and maintenance. Trigger when the user mentions: invoices, sessions, locum GP, THL-GP, Twickenham Health, dashboard, invoice form, PDF generator, SQLite DB, or any project file."
 ---
 
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.0 — Production Ready (June 2026)
+v1.3 (Production Ready)
 
-## GitHub Repository
-https://github.com/ShouaibK/twickenham_health
 
----
 
 ## Project Overview
 A standalone Windows 11 desktop application for generating and managing
 Locum GP invoices for Twickenham Health Limited.
 
-- Fully offline — no internet required
-- Runs as a single `.exe` via PyInstaller
-- Clean Tkinter UI in navy and white matching company branding
+- Fully offline (no internet required)
+- Runs as a single `.exe`
+- Clean UI, fast performance, reliable output
 - Designed for non-technical users
-- SQLite database — single file, portable backup
 
----
 
-## Environment
-| Item | Detail |
-|---|---|
-| OS | Windows 11 25H2 |
-| Python | 3.13.14 |
-| pip | 26.1.2 |
-| VS Code | 1.125.1 |
-| Project path | `C:\Practice\twickenham_health\` |
-| GitHub | https://github.com/ShouaibK/twickenham_health |
-
----
 
 ## Tech Stack
-| Layer | Tool | Version |
-|---|---|---|
-| Language | Python | 3.13.14 |
-| UI | Tkinter | Built-in |
-| Database | SQLite | Built-in |
-| PDF | ReportLab | Latest |
-| Images | Pillow | Built-in via ui/__init__.py |
-| Packaging | PyInstaller | Latest |
+| Layer      | Tool         | Version |
+|------------|-------------|--------|
+| Language   | Python      | 3.11+  |
+| UI         | Tkinter     | Built-in |
+| Database   | SQLite      | Built-in |
+| PDF        | ReportLab   | Latest |
+| Images     | Pillow      | Latest |
+| Packaging  | PyInstaller | Latest |
 
 Install dependencies:
 ```bash
 pip install reportlab pillow pyinstaller
 ```
 
----
 
-## Actual Project File Structure (Current)
+
+## Project File Structure
 ```
 twickenham_health/
-├── assets/
-│   └── twickenham_health_logo.png  ← Company logo (used in UI + PDF)
-├── database/
+├── main.py                   ← Entry point — launches the app window
+├── ui/
 │   ├── __init__.py
-│   ├── db.py                       ← ALL SQLite operations (CRUD)
-│   └── invoices.db                 ← Auto-created on first run
+│   ├── dashboard.py          ← Home screen: records table + toolbar
+│   ├── invoice_form.py       ← New / Edit invoice entry form
+│   ├── invoice_view.py       ← Read-only view of a single invoice
+│   └── pdf_preview.py        ← PDF preview before printing
 ├── logic/
 │   ├── __init__.py
-│   ├── invoice_logic.py            ← Calculations, validation, formatting
-│   ├── pdf_generator.py            ← PDF invoice builder + open/print helpers
-│   └── records_report.py           ← PDF records report (dashboard print)
-├── output/                         ← Generated PDFs saved here (gitignored)
-├── tests/
-│   └── generate_pdf_test.py        ← PDF generation test
-├── ui/
-│   ├── __init__.py                 ← load_logo_image() helper
-│   ├── dashboard.py                ← Home screen: records table + toolbar
-│   ├── invoice_form.py             ← New / Edit invoice entry form
-│   └── invoice_view.py             ← Read-only view of a single invoice
-├── .gitignore                      ← Ignores __pycache__, output/
-├── build.bat                       ← One-click PyInstaller .exe builder
-├── main.py                         ← Entry point — launches the app window
-├── requirements.txt                ← pip packages list
-└── SKILL.md                        ← This file
+│   ├── invoice_logic.py      ← Totals, due amount calculations
+│   ├── pdf_generator.py      ← Builds PDF using ReportLab
+│   └── printer.py            ← Sends PDF to Windows printer
+├── database/
+│   ├── __init__.py
+│   ├── db.py                 ← All SQLite operations (CRUD)
+│   └── invoices.db           ← Auto-created on first run
+├── assets/
+│   ├── logo.png              ← Twickenham Health circular logo
+│   └── fonts/                ← Custom fonts for PDF output
+├── requirements.txt          ← pip packages list
+└── build.bat                 ← One-click PyInstaller .exe builder
 ```
 
----
 
-## IMPORTANT — Files That No Longer Exist
-These files were removed — do NOT recreate or reference them:
-- ~~`logic/printer.py`~~ — merged into `logic/pdf_generator.py`
-- ~~`ui/pdf_preview.py`~~ — never built, not needed
 
----
-
-## Company Details (Fixed — Never Change Without Being Told)
+## Company Details (Fixed — Do Not Change in Code)
 ```
-Company Name : Twickenham Health Limited
-Address      : 1 Twickenham Grove, Stoke-on-Trent, ST4 8WS, United Kingdom
-Phone        : 07859 001684
-Reg No       : 16271052
-Bank Name    : MONZO
-Account No   : 99909112
-Sort Code    : 04-00-03
+Company Name   : Twickenham Health Limited
+Address        : 1 Twickenham Grove, Stoke-on-Trent, ST4 8WS, United Kingdom
+Phone          : 07859 001684
+Reg No         : 16271052
+Bank Name      : MONZO
+Account No     : 99909112
+Sort Code      : 04-00-03
 ```
 
----
+
 
 ## Customer Details (Fixed — Always the Same)
 ```
-Customer Name : Allen Street Clinic
-Address       : Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom
+Customer Name  : Allen Street Clinic
+Address        : Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom
 ```
 
----
+
 
 ## Invoice Rules
-| Rule | Detail |
-|---|---|
-| Invoice number format | THL-GP### — user types manually (e.g. THL-GP041) |
-| Invoice prefix | THL-GP — never changes |
-| Due date | Always invoice date + 14 days (editable) |
-| Session total (numeric hours) | rate × hours |
-| Session total (text hours) | rate as-is (flat fee e.g. "Duty Session") |
-| Net Amount | Sum of all session totals |
-| Due Amount | Always equals Net Amount — no VAT/tax |
-| Status values | pending / paid / overdue |
+- Invoice number format : THL-GP### (user types manually e.g. THL-GP041)
+- Due date              : Always 14 days after invoice date (can be edited)
+- Session total         : If Working Hours is numeric → rate × hours
+                          If Working Hours is "Duty Session" → rate as-is
+- Net Amount            : Sum of all session totals
+- Due Amount            : Always equals Net Amount (no tax/VAT)
+- Invoice prefix        : THL-GP (never changes)
 
----
+
 
 ## Database Schema (SQLite)
 
 ### Table: invoices
 ```sql
-CREATE TABLE IF NOT EXISTS invoices (
+CREATE TABLE invoices (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    inv_no      TEXT    NOT NULL UNIQUE,
-    inv_date    TEXT    NOT NULL,
-    due_date    TEXT    NOT NULL,
-    ref         TEXT    DEFAULT '',
-    net_amount  REAL    NOT NULL DEFAULT 0.0,
-    due_amount  REAL    NOT NULL DEFAULT 0.0,
-    status      TEXT    NOT NULL DEFAULT 'pending',
-    created_at  TEXT    DEFAULT CURRENT_TIMESTAMP
+    inv_no      TEXT NOT NULL UNIQUE,
+    inv_date    TEXT NOT NULL,
+    due_date    TEXT NOT NULL,
+    ref         TEXT,
+    net_amount  REAL NOT NULL,
+    due_amount  REAL NOT NULL,
+    status      TEXT DEFAULT 'pending',  -- pending | paid | overdue
+    created_at  TEXT DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ### Table: sessions
 ```sql
-CREATE TABLE IF NOT EXISTS sessions (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    invoice_id    INTEGER NOT NULL,
-    sr_no         INTEGER NOT NULL,
-    activity      TEXT    NOT NULL DEFAULT 'Locum GP session',
-    job_date      TEXT    NOT NULL,
-    hour_rate     REAL    NOT NULL DEFAULT 0.0,
-    work_hours    TEXT    NOT NULL DEFAULT 'Duty Session',
-    session_total REAL    NOT NULL DEFAULT 0.0,
+CREATE TABLE sessions (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    invoice_id  INTEGER NOT NULL,
+    sr_no       INTEGER NOT NULL,
+    activity    TEXT DEFAULT 'Locum GP session',
+    job_date    TEXT NOT NULL,
+    hour_rate   REAL NOT NULL,
+    work_hours  TEXT NOT NULL,   -- e.g. "Duty Session" or "3"
+    session_total REAL NOT NULL,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
 );
 ```
 
----
+
 
 ## UI Screens & Navigation
 
-### main.py — App Entry Point
-- Window: auto-sizes to 85% of screen, centres on launch
-- Loads logo as window icon from `assets/twickenham_health_logo.png`
-- Navigation methods: `show_dashboard()`, `open_invoice_form()`, `open_invoice_view()`
-- Screen switching via `_show_screen()` — destroys current, shows new
-
-### 1. Dashboard (ui/dashboard.py)
-- Navy topbar with logo + company name
+### 1. Dashboard (dashboard.py)
 - Toolbar buttons: New Invoice | Open | Generate PDF | Print | Delete
-- **Print button** → generates records PDF report (NOT a single invoice)
 - Records table columns: Invoice No. | Invoice Date | Due Date | Customer | Sessions | Net Amount | Due Amount | Status
-- Double-click row → opens invoice view
-- Search bar: filters by invoice no., date, ref, status
-- Sortable columns (click header)
-- Status bar: Total | Paid | Pending | Total Earned
-- Row colours: alternating white/grey, green=paid, red=overdue
+- Row hover actions: Eye (view) | PDF | Print | Edit
+- Status bar: Total invoices | Paid | Pending | Total earned
+- Search bar: filter by invoice no., date, or customer
 
-### 2. Invoice Form (ui/invoice_form.py)
-- Used for both New Invoice and Edit Invoice
-- Fields: Invoice No. (manual, THL-GP prefix), Invoice Date, Due Date, Ref (optional)
-- Bill To: pre-filled read-only (Allen Street Clinic)
-- Sessions table: Sr. | Activity | Job Date | Hour Rate | Working Hours | Session Total
-- Add/Remove session rows dynamically
-- Session totals calculate live on keypress
-- Due date auto-sets to invoice date + 14 days on focus-out
-- Net Amount & Due Amount update live
-- Bank details shown read-only at bottom
-- Validates before saving: invoice no. format, dates, at least 1 session
-- Checks duplicate invoice numbers
+### 2. Invoice Form (invoice_form.py)
+- Fields: Invoice No. (manual), Invoice Date, Due Date, Ref (optional)
+- Bill To: pre-filled, read-only (Allen Street Clinic)
+- Sessions table: Sr. | Activity | Session/Job Date | Hour Rate | Working Hours | Session Total
+- Add Session / Remove Session buttons
+- Auto-calculates Net Amount and Due Amount live
+- Save button validates: invoice no. required, at least 1 session required
 
-### 3. Invoice View (ui/invoice_view.py)
-- Read-only display of full invoice
-- Topbar buttons: Close | Edit | Generate PDF | Print | Mark as Paid/Pending | Delete
-- Toggle paid/pending — updates status live without leaving screen
-- Delete shows confirmation dialog with invoice summary
-- Sections: Invoice Summary | Sessions | Totals | Bank Details
+### 3. Invoice View (invoice_view.py)
+- Read-only display of all invoice fields and sessions
+- Action buttons: Generate PDF | Print | Edit | Mark as Paid | Delete
+- Delete triggers confirmation dialog first
 
----
+### 4. Delete Confirmation Dialog
+- Shows invoice summary (no., customer, date, amount)
+- Warning: action cannot be undone
+- Buttons: Cancel | Yes, Delete Invoice
 
-## Logic Files
+### 5. PDF Preview (pdf_preview.py)
+- Opens generated PDF in Windows default viewer
+- Or prints directly via printer.py
 
-### logic/invoice_logic.py
-Key functions:
-- `calculate_session_total(rate, hours)` — numeric: rate×hours, text: flat rate
-- `calculate_totals(sessions)` → (net_amount, due_amount)
-- `format_currency(amount)` → "£1,685.00"
-- `format_rate(amount)` → "£350.00"
-- `format_date_for_display(date_str)` → "26-Dec-2025"
-- `format_date_for_db(date_str)` → "2025-12-26"
-- `validate_invoice_data(inv_no, inv_date, due_date, sessions)` → (bool, msg)
-- `build_session_list(raw_sessions)` → clean list for db
 
-### logic/pdf_generator.py
-Key functions (invoice PDF + open/print helpers — all in one file):
-- `generate_pdf(invoice)` → builds invoice PDF, returns path
-- `generate_and_open(invoice)` → generate + open in default viewer
-- `generate_and_print(invoice)` → same as generate_and_open
-- `open_pdf(pdf_path)` → opens PDF in default system viewer
-- `get_output_folder()` → returns output/ folder path
-- `open_output_folder()` → opens output/ in Windows Explorer
-- PDFs saved to `output/THL-GP###.pdf`
 
-### logic/records_report.py
-Key functions (records table PDF report):
-- `generate_records_pdf(invoices, title)` → builds records report PDF, returns path
-- Used by dashboard Print button to print ALL visible records
-- Includes: company header, records table, summary totals, timestamp
-- PDFs saved to `output/Records_Report_TIMESTAMP.pdf`
-
----
-
-## PDF Invoice Layout (Must Match Sample Exactly)
-Top to bottom order:
-1. Full-width navy bar (#1a2c4e)
-2. Logo (left, 22mm) + Company name & address (right, navy)
-3. "Invoice to Customer" — centred, underlined, bold
+## PDF Invoice Layout (Must Match Sample)
+Replicate exactly — in this order top to bottom:
+1. Top navy blue bar (full width)
+2. Logo (left) + Company name & address (right, navy blue)
+3. "Invoice to Customer" heading (centered, underlined)
 4. Bill To block (left) + Invoice No./Date/Due Date (right, bold values)
-5. Sessions table — navy header row:
+5. Sessions table with navy header row:
    Sr. | Activity | Session/Job Date | Session/Hour Rate | Working Hours | Session Total
 6. Ref. (left) + Net Amount / Due Amount (right, bold)
-7. Bank Details — Bank Name, Account No., Sort/Branch Code
-8. Footer: "* This is system generated invoice doesn't require signature and stamp."
-9. Full-width navy bar (#1a2c4e)
+7. Bank Details section (Bank Name, Account No., Sort/Branch Code)
+8. Footer note: "* This is system generated invoice doesn't require signature and stamp."
+9. Bottom navy blue bar (full width)
 
-Colours:
-- Navy bars & table header : #1a2c4e
-- Table header text : #ffffff
-- Body text : #000000
-- Alternating rows : #ffffff / #f5f5f5
+PDF colours:
+- Navy header/footer bar : #1a2c4e
+- Table header background : #1a2c4e
+- Table header text       : #ffffff
+- Body text               : #000000
+- Bold values             : #000000 bold
 
----
+
+
+## Window Layout (main.py)
+- Window size is calculated dynamically from screen resolution at startup
+- **4% padding on all four sides** — no hard-coded pixel dimensions
+- Bottom padding = `screen_h × 4% + 40px` to exclude the Windows taskbar (40px)
+- Formula:
+  ```
+  pad_x    = screen_w × 0.04
+  pad_top  = screen_h × 0.04
+  pad_bot  = screen_h × 0.04 + 40   ← taskbar clearance
+  target_w = screen_w − pad_x × 2
+  target_h = screen_h − pad_top − pad_bot
+  pos_x    = pad_x
+  pos_y    = pad_top
+  ```
+- `minsize` is set equal to `target_w × target_h` (window is not resizable smaller)
+- Do **not** revert to percentage-based sizing (e.g. `0.85 × screen`) — the 4% padding rule is intentional
+
+
 
 ## Coding Conventions
 - All UI classes inherit from `tk.Frame`
-- All database operations go through `database/db.py` only — no inline SQL in UI
-- All PDF generation in `logic/pdf_generator.py` only
-- All imports from `logic.pdf_generator` — NOT from `logic.printer` (deleted)
-- Use f-strings for all string formatting
-- Date in UI/PDF : DD-Mon-YYYY (e.g. 26-Dec-2025)
-- Date in DB : YYYY-MM-DD (ISO format)
-- Currency : £X,XXX.XX (always GBP, always £ symbol)
-- Colours defined as constants at top of each UI file
+- Database calls go only through `database/db.py` — never inline SQL in UI files
+- PDF generation only in `logic/pdf_generator.py`
+- Use f-strings for formatting
+- Date format in UI  : DD-Mon-YYYY (e.g. 26-Dec-2025)
+- Date format in DB  : YYYY-MM-DD (ISO format)
+- Currency format    : £X,XXX.XX (always GBP, always £ symbol)
 
----
 
-## Common Tasks & Where to Edit
 
-| Task | File(s) to Edit |
-|---|---|
-| Change company details | `SKILL.md` + `logic/pdf_generator.py` |
-| Change bank details | `SKILL.md` + `logic/pdf_generator.py` |
-| Change customer details | `logic/pdf_generator.py` + `ui/invoice_form.py` |
-| Add new UI screen | `ui/` folder + `main.py` navigation |
-| Change invoice calculations | `logic/invoice_logic.py` |
-| Change PDF invoice layout | `logic/pdf_generator.py` |
-| Change records report layout | `logic/records_report.py` |
-| Add/change database column | `database/db.py` (schema + all queries) |
-| Change invoice number format | `ui/invoice_form.py` + `logic/invoice_logic.py` |
-| Change status options | `ui/dashboard.py` + `database/db.py` |
-| Change window size/title | `main.py` |
-| Change logo | Replace `assets/twickenham_health_logo.png` |
-
----
-
-## How to Run & Build
-
+## How to Run
 ```bash
-# Run in development
+# Run the app in development
 python main.py
 
-# Build standalone .exe
+# Build the .exe for distribution
 build.bat
 ```
 
-Output .exe saved to: `dist/TwickenhamHealth.exe`
-
----
-
-## GitHub Workflow
-```bash
-# Save changes
-git add .
-git commit -m "describe change"
-git push
-
-# Get latest on another PC
-git pull
-
-# First time on new PC
-git clone https://github.com/ShouaibK/twickenham_health.git
-cd twickenham_health
-pip install -r requirements.txt
-python main.py
+## build.bat Contents
+```bat
+pyinstaller --onefile --windowed --icon=assets/logo.ico --name="TwickenhamHealth" main.py
+pause
 ```
 
----
 
-## Things Claude Must NEVER Change Without Being Explicitly Asked
+
+## Common Tasks & Where to Edit
+
+| Task                        | File to edit                    |
+|-----------------------------|---------------------------------|
+| Change company details      | This SKILL.md + pdf_generator.py|
+| Change customer details      | invoice_form.py + pdf_generator.py |
+| Add a new UI screen         | ui/ folder + main.py navigation |
+| Change invoice calculations | logic/invoice_logic.py          |
+| Change PDF layout           | logic/pdf_generator.py          |
+| Add a database column       | database/db.py (schema + queries)|
+| Change invoice number format| invoice_form.py + db.py         |
+| Change bank details         | This SKILL.md + pdf_generator.py|
+| Change status options       | dashboard.py + db.py            |
+| Change window size/padding  | main.py (Window Layout section) |
+
+
+
+## Things Claude Must Never Change Without Being Asked
 - Company name, address, phone, reg number
 - Bank details (MONZO, 99909112, 04-00-03)
 - Customer name and address (Allen Street Clinic)
 - Invoice number prefix (THL-GP)
-- PDF layout order and navy colour scheme (#1a2c4e)
-- Database schema (without migrating existing data)
-- Import `logic.printer` — this file was DELETED, use `logic.pdf_generator`
+- PDF layout order and navy colour scheme
