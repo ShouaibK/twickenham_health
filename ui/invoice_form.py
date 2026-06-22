@@ -477,6 +477,9 @@ class InvoiceForm(tk.Frame):
         self._ref.delete(0, "end")
         self._ref.insert(0, invoice.get("ref", "") or "")
 
+        # Pre-select the customer this invoice was billed to
+        self._reload_customers(select_name=invoice.get("customer_name"))
+
         for s in invoice.get("sessions", []):
             self._add_session_row(s)
 
@@ -516,11 +519,16 @@ class InvoiceForm(tk.Frame):
         sessions       = build_session_list(raw)
         net_amt, due_amt = calculate_totals(raw)
 
+        # Resolve selected customer id
+        selected_name = self._customer_var.get()
+        cust_data     = self._customer_map.get(selected_name, {})
+        customer_id   = cust_data.get("id")
+
         if self.invoice_id:
             # Update existing
             ok = db.update_invoice(
                 self.invoice_id, inv_no, inv_date, due_date,
-                ref, net_amt, due_amt, sessions
+                ref, net_amt, due_amt, sessions, customer_id
             )
             if ok:
                 messagebox.showinfo("Saved", f"Invoice {inv_no} updated.")
@@ -533,7 +541,7 @@ class InvoiceForm(tk.Frame):
             # New invoice
             new_id = db.save_invoice(
                 inv_no, inv_date, due_date,
-                ref, net_amt, due_amt, sessions
+                ref, net_amt, due_amt, sessions, customer_id
             )
             if new_id:
                 messagebox.showinfo("Saved",
