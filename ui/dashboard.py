@@ -303,7 +303,7 @@ class Dashboard(tk.Frame):
                     inv["inv_no"],
                     format_date_for_display(inv["inv_date"]),
                     format_date_for_display(inv["due_date"]),
-                    "Allen Street Clinic",
+                    inv.get("customer_name", "Unknown"),
                     inv.get("session_count", 0),
                     format_currency(inv["net_amount"]),
                     format_currency(inv["due_amount"]),
@@ -494,7 +494,7 @@ class Dashboard(tk.Frame):
         confirm = messagebox.askyesno(
             "Delete Invoice",
             f"Delete invoice {invoice['inv_no']}?\n\n"
-            f"Customer : Allen Street Clinic\n"
+            f"Customer : {invoice.get('customer_name', 'Unknown')}\n"
             f"Date     : {format_date_for_display(invoice['inv_date'])}\n"
             f"Amount   : {format_currency(invoice['due_amount'])}\n\n"
             "This action cannot be undone.",
