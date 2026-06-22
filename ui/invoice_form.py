@@ -190,25 +190,77 @@ class InvoiceForm(tk.Frame):
         row  = tk.Frame(card, bg=WHITE)
         row.pack(fill="x", pady=4)
 
+        # Customer dropdown
         f1 = tk.Frame(row, bg=WHITE)
         f1.pack(side="left", expand=True, fill="x", padx=(0, 8))
         tk.Label(f1, text="Customer Name", bg=WHITE,
                  fg=TEXT_MID, font=FONT_SMALL).pack(anchor="w")
-        e1 = tk.Entry(f1, font=FONT_NORMAL, relief="solid", bd=1,
-                      bg=LIGHT_GREY, fg=TEXT_MID)
-        e1.pack(fill="x", ipady=4)
-        e1.insert(0, "Allen Street Clinic")
-        e1.config(state="readonly")
 
+        self._customer_var = tk.StringVar()
+        self._customer_map = {}   # display name → {id, address, contact}
+        self._customer_cb  = ttk.Combobox(
+            f1, textvariable=self._customer_var,
+            font=FONT_NORMAL, state="readonly")
+        self._customer_cb.pack(fill="x", ipady=4)
+        self._customer_cb.bind("<<ComboboxSelected>>",
+                               self._on_customer_selected)
+
+        # Address (auto-filled, read-only)
         f2 = tk.Frame(row, bg=WHITE)
         f2.pack(side="left", expand=True, fill="x")
         tk.Label(f2, text="Address", bg=WHITE,
                  fg=TEXT_MID, font=FONT_SMALL).pack(anchor="w")
-        e2 = tk.Entry(f2, font=FONT_NORMAL, relief="solid", bd=1,
-                      bg=LIGHT_GREY, fg=TEXT_MID)
-        e2.pack(fill="x", ipady=4)
-        e2.insert(0, "Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom")
-        e2.config(state="readonly")
+        self._customer_address = tk.Entry(
+            f2, font=FONT_NORMAL, relief="solid", bd=1,
+            bg=LIGHT_GREY, fg=TEXT_MID)
+        self._customer_address.pack(fill="x", ipady=4)
+        self._customer_address.config(state="readonly")
+
+        # Contact (auto-filled, read-only)
+        contact_row = tk.Frame(card, bg=WHITE)
+        contact_row.pack(fill="x", pady=(6, 0))
+        tk.Label(contact_row, text="Contact", bg=WHITE,
+                 fg=TEXT_MID, font=FONT_SMALL).pack(anchor="w")
+        self._customer_contact = tk.Entry(
+            contact_row, font=FONT_NORMAL, relief="solid", bd=1,
+            bg=LIGHT_GREY, fg=TEXT_MID, width=40)
+        self._customer_contact.pack(anchor="w", ipady=4)
+        self._customer_contact.config(state="readonly")
+
+        # Load customers into dropdown
+        self._reload_customers()
+
+    def _reload_customers(self, select_name=None):
+        """Fetch customers from DB and populate the dropdown."""
+        customers = db.get_all_customers()
+        self._customer_map = {
+            c["name"]: c for c in customers
+        }
+        names = list(self._customer_map.keys())
+        self._customer_cb["values"] = names
+
+        # Default selection
+        if select_name and select_name in self._customer_map:
+            self._customer_var.set(select_name)
+        elif names:
+            self._customer_var.set(names[0])
+        self._on_customer_selected()
+
+    def _on_customer_selected(self, _event=None):
+        """Auto-fill address and contact when a customer is chosen."""
+        name = self._customer_var.get()
+        cust = self._customer_map.get(name)
+        if not cust:
+            return
+        self._customer_address.config(state="normal")
+        self._customer_address.delete(0, "end")
+        self._customer_address.insert(0, cust.get("address", ""))
+        self._customer_address.config(state="readonly")
+
+        self._customer_contact.config(state="normal")
+        self._customer_contact.delete(0, "end")
+        self._customer_contact.insert(0, cust.get("contact", ""))
+        self._customer_contact.config(state="readonly")
 
     def _sessions_card(self):
         self._sessions_outer = self._card(self._body, "Sessions")
