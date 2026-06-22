@@ -43,7 +43,27 @@ def initialise_db():
             session_total REAL    NOT NULL DEFAULT 0.0,
             FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS customers (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            name       TEXT NOT NULL,
+            address    TEXT DEFAULT '',
+            contact    TEXT DEFAULT '',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
     """)
+
+    # Seed default customer if table is empty
+    cursor.execute("SELECT COUNT(*) FROM customers")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute(
+            "INSERT INTO customers (name, address, contact) VALUES (?, ?, ?)",
+            (
+                "Allen Street Clinic",
+                "Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom",
+                "",
+            ),
+        )
 
     conn.commit()
     conn.close()
@@ -286,3 +306,83 @@ def get_stats():
         "pending":      pending,
         "total_earned": total_earned,
     }
+
+
+# ──────────────────────────────────────────────
+#  CUSTOMER CRUD
+# ──────────────────────────────────────────────
+
+def get_all_customers(search: str = "") -> list:
+    """Return all customers ordered by name, optionally filtered."""
+    conn   = get_connection()
+    cursor = conn.cursor()
+    if search:
+        like = f"%{search}%"
+        cursor.execute(
+            "SELECT id, name, address, contact FROM customers "
+            "WHERE name LIKE ? OR contact LIKE ? "
+            "ORDER BY name COLLATE NOCASE",
+            (like, like),
+        )
+    else:
+        cursor.execute(
+            "SELECT id, name, address, contact FROM customers "
+            "ORDER BY name COLLATE NOCASE"
+        )
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id": r["id"], "name": r["name"],
+             "address": r["address"], "contact": r["contact"]} for r in rows]
+
+
+def get_customer_by_id(customer_id: int):
+    """Return a single customer dict or None."""
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, name, address, contact FROM customers WHERE id = ?",
+        (customer_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row is None:
+        return None
+    return {"id": row["id"], "name": row["name"],
+            "address": row["address"], "contact": row["contact"]}
+
+
+def add_customer(name: str, address: str, contact: str) -> int:
+    """Insert a new customer and return its new id."""
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO customers (name, address, contact) VALUES (?, ?, ?)",
+        (name.strip(), address.strip(), contact.strip()),
+    )
+    new_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return new_id
+
+
+def update_customer(customer_id: int, name: str,
+                    address: str, contact: str) -> None:
+    """Update an existing customer record."""
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE customers SET name=?, address=?, contact=? WHERE id=?",
+        (name.strip(), address.strip(), contact.strip(), customer_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_customer(customer_id: int) -> None:
+    """Delete a customer by id."""
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM customers WHERE id = ?", (customer_id,))
+    conn.commit()
+    conn.close()
+
