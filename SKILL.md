@@ -1,5 +1,5 @@
 ---
-name: twickenham-health-invoice-app
+name: twickenham_health
 description: >
   Use this skill whenever working on the Twickenham Health Limited Locum GP
   Invoice desktop application. Covers all coding tasks including UI screens,
