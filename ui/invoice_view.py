@@ -196,8 +196,10 @@ class InvoiceView(tk.Frame):
         self._due_date.config(text=format_date_for_display(invoice["due_date"]))
         self._ref_value.config(text=invoice.get("ref", ""))
         self._created_at.config(text=format_date_for_display(invoice.get("created_at", "")))
-        self._customer_label.config(text="Allen Street Clinic")
-        self._customer_address.config(text="Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom")
+        self._customer_label.config(
+            text=invoice.get("customer_name", "Unknown"))
+        self._customer_address.config(
+            text=invoice.get("customer_address", ""))
 
         status = invoice.get("status", "pending")
         self._status_label.config(text=status.title())
@@ -261,7 +263,7 @@ class InvoiceView(tk.Frame):
         confirm = messagebox.askyesno(
             "Delete Invoice",
             f"Delete invoice {self.invoice['inv_no']}?\n\n"
-            f"Customer : Allen Street Clinic\n"
+            f"Customer : {self.invoice.get('customer_name', 'Unknown')}\n"
             f"Date     : {format_date_for_display(self.invoice['inv_date'])}\n"
             f"Amount   : {format_currency(self.invoice['due_amount'])}\n\n"
             "This action cannot be undone.",
