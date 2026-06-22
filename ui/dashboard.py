@@ -30,14 +30,16 @@ class Dashboard(tk.Frame):
     with toolbar buttons and a status bar.
     """
 
-    def __init__(self, parent, on_new, on_open, on_edit, *args, **kwargs):
+    def __init__(self, parent, on_new, on_open, on_edit, on_customers,
+                 *args, **kwargs):
         super().__init__(parent, bg=LIGHT_GREY, *args, **kwargs)
         self._logo_image = load_logo_image(size=(52, 52))
 
         # Callbacks injected from main.py
-        self.on_new  = on_new    # open blank invoice form
-        self.on_open = on_open   # open invoice view screen
-        self.on_edit = on_edit   # open invoice form pre-filled
+        self.on_new       = on_new       # open blank invoice form
+        self.on_open      = on_open      # open invoice view screen
+        self.on_edit      = on_edit      # open invoice form pre-filled
+        self.on_customers = on_customers # open customer manager
 
         self._checked = set()   # set of iids that are checkbox-checked
         self._all_checked = False  # tracks header checkbox state
@@ -115,6 +117,8 @@ class Dashboard(tk.Frame):
         tk.Frame(bar, bg=MID_GREY, width=1).pack(side="right", fill="y", padx=4)
         btn(bar, "📄  Open",          self._open_selected)
         btn(bar, "＋  New Invoice",   self.on_new,            fg=WHITE, bg=NAVY)
+        tk.Frame(bar, bg=MID_GREY, width=1).pack(side="right", fill="y", padx=4)
+        btn(bar, "👥  Customers",     self.on_customers,      fg=WHITE, bg="#4a6fa5")
 
         # Search on the left
         search_frame = tk.Frame(bar, bg=WHITE)
