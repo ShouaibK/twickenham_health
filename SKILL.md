@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v1.3 (Production Ready)
+v1.5 (Production Ready)
 
 
 
@@ -140,6 +140,11 @@ CREATE TABLE sessions (
 - Row hover actions: Eye (view) | PDF | Print | Edit
 - Status bar: Total invoices | Paid | Pending | Total earned
 - Search bar: filter by invoice no., date, or customer
+- **Topbar specs (do not change without being asked):**
+  - Height: `78px`
+  - Logo size: `(52, 52)` px
+  - "Twickenham Health Limited" font: `Segoe UI 14 bold`
+  - "Locum GP Invoice Manager" font: `Segoe UI 10`
 
 ### 2. Invoice Form (invoice_form.py)
 - Fields: Invoice No. (manual), Invoice Date, Due Date, Ref (optional)
@@ -257,3 +262,4 @@ pause
 - Customer name and address (Allen Street Clinic)
 - Invoice number prefix (THL-GP)
 - PDF layout order and navy colour scheme
+- Dashboard topbar height, logo size, and font sizes (see UI Screens § 1)
