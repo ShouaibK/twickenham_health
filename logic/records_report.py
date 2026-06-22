@@ -228,7 +228,7 @@ def _records_table(invoices, doc):
             Paragraph(inv.get("inv_no", ""),                           td_center),
             Paragraph(format_date_for_display(inv.get("inv_date", "")), td_center),
             Paragraph(format_date_for_display(inv.get("due_date", "")), td_center),
-            Paragraph("Allen Street Clinic",                            td_left),
+            Paragraph(inv.get("customer_name", "Unknown"),               td_left),
             Paragraph(str(inv.get("session_count", 0)),                 td_center),
             Paragraph(format_currency(inv.get("net_amount", 0)),        td_right),
             Paragraph(format_currency(inv.get("due_amount", 0)),        td_right),
