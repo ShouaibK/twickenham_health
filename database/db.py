@@ -29,6 +29,7 @@ def initialise_db():
             net_amount  REAL    NOT NULL DEFAULT 0.0,
             due_amount  REAL    NOT NULL DEFAULT 0.0,
             status      TEXT    NOT NULL DEFAULT 'pending',
+            customer_id INTEGER DEFAULT NULL,
             created_at  TEXT    DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -53,6 +54,13 @@ def initialise_db():
         );
     """)
 
+    # Migration: add customer_id column if it doesn't exist (for existing DBs)
+    try:
+        cursor.execute("ALTER TABLE invoices ADD COLUMN customer_id INTEGER DEFAULT NULL")
+        conn.commit()
+    except Exception:
+        pass  # column already exists
+
     # Seed default customer if table is empty
     cursor.execute("SELECT COUNT(*) FROM customers")
     if cursor.fetchone()[0] == 0:
@@ -64,6 +72,17 @@ def initialise_db():
                 "",
             ),
         )
+        conn.commit()
+
+    # Back-fill existing invoices that have no customer_id → assign default customer
+    cursor.execute("SELECT id FROM customers ORDER BY id LIMIT 1")
+    default_row = cursor.fetchone()
+    if default_row:
+        cursor.execute(
+            "UPDATE invoices SET customer_id = ? WHERE customer_id IS NULL",
+            (default_row[0],)
+        )
+        conn.commit()
 
     conn.commit()
     conn.close()
@@ -74,7 +93,7 @@ def initialise_db():
 # ──────────────────────────────────────────────
 
 def save_invoice(inv_no, inv_date, due_date, ref,
-                 net_amount, due_amount, sessions):
+                 net_amount, due_amount, sessions, customer_id=None):
     """
     Insert a new invoice and its sessions.
     sessions = list of dicts with keys:
@@ -86,9 +105,11 @@ def save_invoice(inv_no, inv_date, due_date, ref,
     try:
         cursor.execute("""
             INSERT INTO invoices
-                (inv_no, inv_date, due_date, ref, net_amount, due_amount, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'pending')
-        """, (inv_no, inv_date, due_date, ref, net_amount, due_amount))
+                (inv_no, inv_date, due_date, ref, net_amount, due_amount,
+                 status, customer_id)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
+        """, (inv_no, inv_date, due_date, ref, net_amount, due_amount,
+              customer_id))
 
         invoice_id = cursor.lastrowid
 
@@ -120,7 +141,7 @@ def save_invoice(inv_no, inv_date, due_date, ref,
 
 
 def update_invoice(invoice_id, inv_no, inv_date, due_date, ref,
-                   net_amount, due_amount, sessions):
+                   net_amount, due_amount, sessions, customer_id=None):
     """
     Update an existing invoice and replace all its sessions.
     Returns True on success, False on duplicate inv_no.
@@ -130,15 +151,16 @@ def update_invoice(invoice_id, inv_no, inv_date, due_date, ref,
     try:
         cursor.execute("""
             UPDATE invoices
-               SET inv_no     = ?,
-                   inv_date   = ?,
-                   due_date   = ?,
-                   ref        = ?,
-                   net_amount = ?,
-                   due_amount = ?
+               SET inv_no      = ?,
+                   inv_date    = ?,
+                   due_date    = ?,
+                   ref         = ?,
+                   net_amount  = ?,
+                   due_amount  = ?,
+                   customer_id = ?
              WHERE id = ?
         """, (inv_no, inv_date, due_date, ref,
-              net_amount, due_amount, invoice_id))
+              net_amount, due_amount, customer_id, invoice_id))
 
         # Delete old sessions then re-insert
         cursor.execute("DELETE FROM sessions WHERE invoice_id = ?",
@@ -211,25 +233,37 @@ def get_all_invoices(search=""):
     if search:
         pattern = f"%{search}%"
         cursor.execute("""
-            SELECT id, inv_no, inv_date, due_date, ref,
-                   net_amount, due_amount, status, created_at,
-                   (SELECT COUNT(*) FROM sessions WHERE invoice_id = invoices.id) AS session_count
-              FROM invoices
-             WHERE inv_no   LIKE ?
-                OR inv_date LIKE ?
-                OR due_date LIKE ?
-                OR ref      LIKE ?
-                OR status   LIKE ?
-                OR 'Allen Street Clinic' LIKE ?
-            ORDER BY created_at DESC
+            SELECT i.id, i.inv_no, i.inv_date, i.due_date, i.ref,
+                   i.net_amount, i.due_amount, i.status, i.created_at,
+                   i.customer_id,
+                   COALESCE(c.name, 'Unknown') AS customer_name,
+                   COALESCE(c.address, '')     AS customer_address,
+                   COALESCE(c.contact, '')     AS customer_contact,
+                   (SELECT COUNT(*) FROM sessions
+                     WHERE invoice_id = i.id)  AS session_count
+              FROM invoices i
+              LEFT JOIN customers c ON c.id = i.customer_id
+             WHERE i.inv_no   LIKE ?
+                OR i.inv_date LIKE ?
+                OR i.due_date LIKE ?
+                OR i.ref      LIKE ?
+                OR i.status   LIKE ?
+                OR c.name     LIKE ?
+            ORDER BY i.created_at DESC
         """, (pattern, pattern, pattern, pattern, pattern, pattern))
     else:
         cursor.execute("""
-            SELECT id, inv_no, inv_date, due_date, ref,
-                   net_amount, due_amount, status, created_at,
-                   (SELECT COUNT(*) FROM sessions WHERE invoice_id = invoices.id) AS session_count
-              FROM invoices
-             ORDER BY created_at DESC
+            SELECT i.id, i.inv_no, i.inv_date, i.due_date, i.ref,
+                   i.net_amount, i.due_amount, i.status, i.created_at,
+                   i.customer_id,
+                   COALESCE(c.name, 'Unknown') AS customer_name,
+                   COALESCE(c.address, '')     AS customer_address,
+                   COALESCE(c.contact, '')     AS customer_contact,
+                   (SELECT COUNT(*) FROM sessions
+                     WHERE invoice_id = i.id)  AS session_count
+              FROM invoices i
+              LEFT JOIN customers c ON c.id = i.customer_id
+             ORDER BY i.created_at DESC
         """)
 
     rows = [dict(row) for row in cursor.fetchall()]
@@ -242,7 +276,15 @@ def get_invoice_by_id(invoice_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,))
+    cursor.execute("""
+        SELECT i.*,
+               COALESCE(c.name,    'Unknown') AS customer_name,
+               COALESCE(c.address, '')        AS customer_address,
+               COALESCE(c.contact, '')        AS customer_contact
+          FROM invoices i
+          LEFT JOIN customers c ON c.id = i.customer_id
+         WHERE i.id = ?
+    """, (invoice_id,))
     row = cursor.fetchone()
     if not row:
         conn.close()
