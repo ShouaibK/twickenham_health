@@ -40,6 +40,7 @@ class Dashboard(tk.Frame):
         self.on_edit = on_edit   # open invoice form pre-filled
 
         self._checked = set()   # set of iids that are checkbox-checked
+        self._all_checked = False  # tracks header checkbox state
 
         self._build_topbar()
         self._build_table()
@@ -163,7 +164,7 @@ class Dashboard(tk.Frame):
 
         # Column headings & widths
         col_cfg = {
-            "check":      ("",              30, "center"),
+            "check":      ("☐",             30, "center"),
             "inv_no":     ("Invoice No.",   100, "center"),
             "inv_date":   ("Invoice Date",  100, "center"),
             "due_date":   ("Due Date",      100, "center"),
@@ -174,8 +175,12 @@ class Dashboard(tk.Frame):
             "status":     ("Status",         80, "center"),
         }
         for col, (heading, width, anchor) in col_cfg.items():
-            self._tree.heading(col, text=heading,
-                               command=lambda c=col: self._sort(c) if c != "check" else None)
+            if col == "check":
+                self._tree.heading(col, text=heading,
+                                   command=self._toggle_all_checkboxes)
+            else:
+                self._tree.heading(col, text=heading,
+                                   command=lambda c=col: self._sort(c))
             self._tree.column(col, width=width, anchor=anchor,
                               minwidth=30 if col == "check" else 60,
                               stretch=col != "check")
@@ -319,6 +324,26 @@ class Dashboard(tk.Frame):
     #  HELPERS
     # ──────────────────────────────────────────
 
+    def _toggle_all_checkboxes(self):
+        """Header checkbox click — check all if any unchecked, uncheck all if all checked."""
+        all_iids = self._tree.get_children("")
+        if not all_iids:
+            return
+        if self._all_checked:
+            # Uncheck all
+            self._checked.clear()
+            for iid in all_iids:
+                self._tree.set(iid, "check", "☐")
+            self._all_checked = False
+            self._tree.heading("check", text="☐")
+        else:
+            # Check all
+            for iid in all_iids:
+                self._checked.add(iid)
+                self._tree.set(iid, "check", "☑")
+            self._all_checked = True
+            self._tree.heading("check", text="☑")
+
     def _on_click(self, event):
         """Toggle checkbox when the check column is clicked; otherwise leave single-row selection alone."""
         region = self._tree.identify_region(event.x, event.y)
@@ -336,6 +361,10 @@ class Dashboard(tk.Frame):
         else:
             self._checked.add(iid)
             self._tree.set(iid, "check", "☑")
+        # Sync header checkbox: ☑ only when every row is checked
+        all_iids = set(self._tree.get_children(""))
+        self._all_checked = all_iids.issubset(self._checked) and bool(all_iids)
+        self._tree.heading("check", text="☑" if self._all_checked else "☐")
 
     def _on_double_click(self, event):
         """Open invoice on double-click, but ignore double-clicks on the checkbox column."""
@@ -396,27 +425,35 @@ class Dashboard(tk.Frame):
 
     def _print_selected(self):
         """
-        Print the current records table as a PDF report.
-        Respects the active search filter — only prints visible records.
+        Print checked invoices as a PDF report.
+        If no checkboxes are ticked, falls back to the single selected row.
         """
-        search   = self._search_var.get().strip() \
-                   if hasattr(self, "_search_var") else ""
-        invoices = db.get_all_invoices(search)
+        checked = self._checked_ids()
+
+        if checked:
+            # Fetch only the checked invoices (preserve table display order)
+            all_invoices = db.get_all_invoices("")
+            invoices = [inv for inv in all_invoices if inv["id"] in checked]
+            label_mode = f"{len(invoices)} checked invoice(s)"
+        else:
+            # Fallback: use single-row selection
+            inv_id = self._selected_id()
+            if not inv_id:
+                return
+            invoice = db.get_invoice_by_id(inv_id)
+            if not invoice:
+                return
+            invoices   = [invoice]
+            label_mode = f"1 selected invoice ({invoice['inv_no']})"
 
         if not invoices:
-            messagebox.showwarning(
-                "No Records",
-                "There are no records to print."
-            )
+            messagebox.showwarning("No Records", "No invoices to print.")
             return
 
-        count = len(invoices)
-        label = f"filtered " if search else ""
         confirm = messagebox.askyesno(
             "Print Records",
-            f"Print {count} {label}record(s) as a PDF report?\n\n"
-            f"Company : Twickenham Health Limited\n"
-            f"Records : {count} invoice(s)\n\n"
+            f"Print {label_mode} as a PDF report?\n\n"
+            f"Company : Twickenham Health Limited\n\n"
             "A PDF will be generated and opened for printing.",
         )
         if not confirm:
@@ -426,8 +463,8 @@ class Dashboard(tk.Frame):
             from logic.records_report import generate_records_pdf
             from logic.pdf_generator import open_pdf
             title    = "Invoice Records Report"
-            if search:
-                title = f"Invoice Records Report — Filter: '{search}'"
+            if len(invoices) == 1:
+                title = f"Invoice Report — {invoices[0]['inv_no']}"
             pdf_path = generate_records_pdf(invoices, title=title)
             open_pdf(pdf_path)
             messagebox.showinfo(
