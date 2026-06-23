@@ -6,7 +6,12 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.0 (Production Ready)
+v2.1 (Production Ready)
+
+## ⚠️ Mandatory First Step
+**At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
+This file is the single source of truth for all project decisions, file locations, UI specs, DB schema, conventions, and rules.
+Do not rely on memory alone. Always verify against this file first.
 
 
 
