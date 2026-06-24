@@ -249,7 +249,7 @@ def get_all_invoices(search=""):
                 OR i.ref      LIKE ?
                 OR i.status   LIKE ?
                 OR c.name     LIKE ?
-            ORDER BY i.created_at DESC
+            ORDER BY i.inv_no COLLATE NOCASE ASC
         """, (pattern, pattern, pattern, pattern, pattern, pattern))
     else:
         cursor.execute("""
@@ -263,7 +263,7 @@ def get_all_invoices(search=""):
                      WHERE invoice_id = i.id)  AS session_count
               FROM invoices i
               LEFT JOIN customers c ON c.id = i.customer_id
-             ORDER BY i.created_at DESC
+             ORDER BY i.inv_no COLLATE NOCASE ASC
         """)
 
     rows = [dict(row) for row in cursor.fetchall()]
@@ -427,4 +427,3 @@ def delete_customer(customer_id: int) -> None:
     cursor.execute("DELETE FROM customers WHERE id = ?", (customer_id,))
     conn.commit()
     conn.close()
-
