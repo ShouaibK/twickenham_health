@@ -168,10 +168,10 @@ class Dashboard(tk.Frame):
 
         # Column headings & widths
         col_cfg = {
-            "check":      ("☐",              36, "center"),
-            "inv_no":     ("Invoice No.",    120, "center"),
-            "inv_date":   ("Invoice Date",   110, "center"),
-            "due_date":   ("Due Date",       110, "center"),
+            "check":      ("☐",              64, "center"),
+            "inv_no":     ("Invoice No.",     80, "center"),
+            "inv_date":   ("Invoice Date",    80, "center"),
+            "due_date":   ("Due Date",        80, "center"),
             "customer":   ("Customer",       200, "w"),
             "sessions":   ("Sessions",        75, "center"),
             "net_amount": ("Net Amount",     110, "e"),
@@ -186,8 +186,8 @@ class Dashboard(tk.Frame):
                 self._tree.heading(col, text=heading,
                                    command=lambda c=col: self._sort(c))
             self._tree.column(col, width=width, anchor=anchor,
-                              minwidth=30 if col == "check" else 60,
-                              stretch=col != "check")
+                              minwidth=width,
+                              stretch=col == "customer")
 
         # Style
         style = ttk.Style()
