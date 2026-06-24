@@ -470,17 +470,26 @@ class Dashboard(tk.Frame):
             if len(invoices) == 1:
                 title = f"Invoice Report — {invoices[0]['inv_no']}"
             pdf_path = generate_records_pdf(invoices, title=title)
-            open_pdf(pdf_path)
-            messagebox.showinfo(
-                "Records Report",
-                f"PDF opened successfully.\n\n"
-                f"Use File → Print inside your PDF viewer to print.\n\n"
-                f"Saved at:\n{pdf_path}"
-            )
+            opened   = open_pdf(pdf_path)
+            if opened:
+                messagebox.showinfo(
+                    "Print — Records Report",
+                    f"✅ PDF generated and opened successfully.\n\n"
+                    f"Records : {len(invoices)} invoice(s)\n"
+                    f"File    : {pdf_path}\n\n"
+                    "Use File → Print inside your PDF viewer to send to printer."
+                )
+            else:
+                messagebox.showwarning(
+                    "Print — PDF Saved",
+                    f"✅ PDF saved but could not open automatically.\n\n"
+                    f"File : {pdf_path}\n\n"
+                    "Please open it manually and print from there."
+                )
         except Exception as e:
             messagebox.showerror(
                 "Print Error",
-                f"Could not generate records report:\n{str(e)}"
+                f"❌ Could not generate records report:\n\n{str(e)}"
             )
 
     def _delete_selected(self):

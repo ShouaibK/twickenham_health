@@ -11,6 +11,7 @@ from logic.invoice_logic import (
     format_date_for_display,
     today_str,
     default_due_date_str,
+    calculate_due_date_str,
     validate_invoice_data,
     build_session_list,
 )
@@ -443,15 +444,11 @@ class InvoiceForm(tk.Frame):
         self._due_label.config(text=format_currency(due))
 
     def _on_inv_date_change(self, event=None):
-        """Auto-set due date to invoice date + 14 days."""
-        try:
-            from datetime import timedelta
-            dt  = datetime.strptime(self._inv_date.get().strip(), "%Y-%m-%d")
-            due = (dt + timedelta(days=14)).strftime("%Y-%m-%d")
-            self._due_date.delete(0, "end")
-            self._due_date.insert(0, due)
-        except ValueError:
-            pass
+        """Auto-set due date to invoice date + 20 days, shifted off weekends."""
+        raw = self._inv_date.get().strip()
+        due = calculate_due_date_str(raw)
+        self._due_date.delete(0, "end")
+        self._due_date.insert(0, due)
 
     # ──────────────────────────────────────────
     #  LOAD / SAVE

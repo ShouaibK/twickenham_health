@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.1 (Production Ready)
+v2.2 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -94,7 +94,11 @@ Address        : Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom
 
 ## Invoice Rules
 - Invoice number format : THL-GP### (user types manually e.g. THL-GP041)
-- Due date              : Always 14 days after invoice date (can be edited)
+- Due date              : Always 20 days after invoice date (can be edited manually)
+                          If the 20th day falls on Saturday → shifted to Monday (+2 days)
+                          If the 20th day falls on Sunday   → shifted to Monday (+1 day)
+                          Logic lives in `calculate_due_date_str()` in invoice_logic.py
+                          `default_due_date_str()` applies same rule from today's date
 - Session total         : If Working Hours is numeric → rate × hours
                           If Working Hours is "Duty Session" → rate as-is
 - Net Amount            : Sum of all session totals

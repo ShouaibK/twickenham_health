@@ -11,8 +11,35 @@ def today_str():
 
 
 def default_due_date_str():
-    """Return today + 14 days as YYYY-MM-DD."""
-    return (datetime.today() + timedelta(days=14)).strftime("%Y-%m-%d")
+    """
+    Return today + 20 days as YYYY-MM-DD.
+    If that date falls on a Saturday (weekday=5) → shift to Monday (+2).
+    If it falls on a Sunday  (weekday=6) → shift to Monday (+1).
+    """
+    due = datetime.today() + timedelta(days=20)
+    if due.weekday() == 5:    # Saturday
+        due += timedelta(days=2)
+    elif due.weekday() == 6:  # Sunday
+        due += timedelta(days=1)
+    return due.strftime("%Y-%m-%d")
+
+
+def calculate_due_date_str(invoice_date_str):
+    """
+    Calculate due date from a given invoice date string (YYYY-MM-DD).
+    20 days later, shifted to Monday if it lands on a weekend.
+    Returns YYYY-MM-DD string.
+    """
+    try:
+        inv_date = datetime.strptime(invoice_date_str, "%Y-%m-%d")
+    except ValueError:
+        return default_due_date_str()
+    due = inv_date + timedelta(days=20)
+    if due.weekday() == 5:    # Saturday → Monday
+        due += timedelta(days=2)
+    elif due.weekday() == 6:  # Sunday → Monday
+        due += timedelta(days=1)
+    return due.strftime("%Y-%m-%d")
 
 
 def format_date_for_display(date_str):
