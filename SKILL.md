@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.4 (Production Ready)
+v2.5 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -282,6 +282,8 @@ PDF colours:
 - All UI classes inherit from `tk.Frame`
 - Database calls go only through `database/db.py` — never inline SQL in UI files
 - PDF generation only in `logic/pdf_generator.py`
+- `generate_pdf(invoice)` reads `invoice["customer_name"]` and `invoice["customer_address"]` from the DB — never hardcoded
+- Falls back to `CUSTOMER_NAME` / `CUSTOMER_ADDR` constants only if DB value is missing
 - Use f-strings for formatting
 - Date format in UI  : DD-Mon-YYYY (e.g. 26-Dec-2025)
 - Date format in DB  : YYYY-MM-DD (ISO format)
