@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.7 (Production Ready)
+v2.9 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS invoices (
 );
 ```
 - `customer_id` is a FK to `customers.id` (LEFT JOIN — **never hardcode customer name anywhere**)
+- `get_all_invoices()` always returns records ordered by `inv_no COLLATE NOCASE ASC` (A→Z) — do not change to `created_at DESC`
 - `get_all_invoices()` and `get_invoice_by_id()` both JOIN customers and return:
   `customer_name`, `customer_address`, `customer_contact`
 - All UI files must use `inv["customer_name"]` — never the string "Allen Street Clinic"
@@ -190,10 +191,10 @@ CREATE TABLE sessions (
 - **Column widths (do not change without being asked):**
   | Column       | Width | Anchor   | Stretch |
   |--------------|-------|----------|---------|
-  | ☐ check      | 64px  | center   | No      |
-  | Invoice No.  | 80px  | center   | No      |
-  | Invoice Date | 80px  | center   | No      |
-  | Due Date     | 80px  | center   | No      |
+  | ☐ check      | 80px  | center   | No      |
+  | Invoice No.  | 110px | center   | No      |
+  | Invoice Date | 110px | center   | No      |
+  | Due Date     | 110px | center   | No      |
   | Customer     | 200px | w (left) | **Yes** — absorbs all remaining space |
   | Sessions     | 75px  | center   | No      |
   | Net Amount   | 110px | e (right)| No      |
