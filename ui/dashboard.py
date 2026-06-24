@@ -168,15 +168,15 @@ class Dashboard(tk.Frame):
 
         # Column headings & widths
         col_cfg = {
-            "check":      ("☐",             30, "center"),
-            "inv_no":     ("Invoice No.",   100, "center"),
-            "inv_date":   ("Invoice Date",  100, "center"),
-            "due_date":   ("Due Date",      100, "center"),
-            "customer":   ("Customer",      180, "w"),
-            "sessions":   ("Sessions",       70, "center"),
-            "net_amount": ("Net Amount",    100, "e"),
-            "due_amount": ("Due Amount",    100, "e"),
-            "status":     ("Status",         80, "center"),
+            "check":      ("☐",              36, "center"),
+            "inv_no":     ("Invoice No.",    120, "center"),
+            "inv_date":   ("Invoice Date",   110, "center"),
+            "due_date":   ("Due Date",       110, "center"),
+            "customer":   ("Customer",       200, "w"),
+            "sessions":   ("Sessions",        75, "center"),
+            "net_amount": ("Net Amount",     110, "e"),
+            "due_amount": ("Due Amount",     110, "e"),
+            "status":     ("Status",          95, "center"),
         }
         for col, (heading, width, anchor) in col_cfg.items():
             if col == "check":
