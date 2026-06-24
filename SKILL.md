@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.5 (Production Ready)
+v2.7 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -187,6 +187,18 @@ CREATE TABLE sessions (
   - Single-row selection via `_selected_id()` is fully independent and untouched
   - `self._checked` is preserved across `refresh()` calls — checked state survives data reloads
   - Column width: `30px`, non-stretching, no sort on click
+- **Column widths (do not change without being asked):**
+  | Column       | Width | Anchor   | Stretch |
+  |--------------|-------|----------|---------|
+  | ☐ check      | 64px  | center   | No      |
+  | Invoice No.  | 80px  | center   | No      |
+  | Invoice Date | 80px  | center   | No      |
+  | Due Date     | 80px  | center   | No      |
+  | Customer     | 200px | w (left) | **Yes** — absorbs all remaining space |
+  | Sessions     | 75px  | center   | No      |
+  | Net Amount   | 110px | e (right)| No      |
+  | Due Amount   | 110px | e (right)| No      |
+  | Status       | 95px  | center   | No      |
 - **Print button behaviour:**
   - If any checkboxes are ticked → prints only those checked invoices
   - If no checkboxes are ticked → falls back to the single selected row
