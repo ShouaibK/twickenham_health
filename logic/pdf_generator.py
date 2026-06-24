@@ -147,6 +147,10 @@ def generate_pdf(invoice: dict) -> str:
     due_amt  = format_currency(invoice.get("due_amount", 0))
     sessions = invoice.get("sessions", [])
 
+    # Customer — use DB value, fall back to hardcoded default
+    cust_name    = invoice.get("customer_name")    or CUSTOMER_NAME
+    cust_address = invoice.get("customer_address") or f"{CUSTOMER_ADDR1} {CUSTOMER_ADDR2}"
+
     filename = os.path.join(OUTPUT_DIR, f"{inv_no}.pdf")
 
     doc = SimpleDocTemplate(
@@ -174,7 +178,8 @@ def generate_pdf(invoice: dict) -> str:
     story.append(Paragraph("<u>Invoice to Customer</u>", heading_style))
     story.append(Spacer(1, 8*mm))
 
-    story.append(_bill_to_block(inv_no, inv_date, due_date, doc))
+    story.append(_bill_to_block(inv_no, inv_date, due_date,
+                                cust_name, cust_address, doc))
     story.append(Spacer(1, 6*mm))
     story.append(_sessions_table(sessions, doc))
     story.append(Spacer(1, 6*mm))
@@ -253,7 +258,7 @@ def _company_header(doc):
     return t
 
 
-def _bill_to_block(inv_no, inv_date, due_date, doc):
+def _bill_to_block(inv_no, inv_date, due_date, cust_name, cust_address, doc):
     """Customer address (left) and invoice meta (right)."""
     normal = ParagraphStyle(
         "Normal2", fontName="Helvetica",
@@ -268,11 +273,12 @@ def _bill_to_block(inv_no, inv_date, due_date, doc):
         fontSize=9, textColor=BLACK, alignment=TA_RIGHT,
     )
 
-    left = [
-        Paragraph(f"<b>{CUSTOMER_NAME}</b>", normal),
-        Paragraph(CUSTOMER_ADDR1, normal),
-        Paragraph(CUSTOMER_ADDR2, normal),
-    ]
+    # Split address into lines for cleaner display
+    addr_lines = [line.strip() for line in cust_address.replace(",", ",\n").split("\n") if line.strip()]
+
+    left = [Paragraph(f"<b>{cust_name}</b>", normal)]
+    for line in addr_lines:
+        left.append(Paragraph(line, normal))
 
     meta_rows = [
         [Paragraph("Invoice No.  :", label_r),
