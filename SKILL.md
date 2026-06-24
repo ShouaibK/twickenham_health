@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.2 (Production Ready)
+v2.4 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -46,28 +46,39 @@ pip install reportlab pillow pyinstaller
 ## Project File Structure
 ```
 twickenham_health/
-├── main.py                   ← Entry point — launches the app window
-├── ui/
-│   ├── __init__.py
-│   ├── dashboard.py          ← Home screen: records table + toolbar
-│   ├── invoice_form.py       ← New / Edit invoice entry form
-│   ├── invoice_view.py       ← Read-only view of a single invoice
-│   └── pdf_preview.py        ← PDF preview before printing
-├── logic/
-│   ├── __init__.py
-│   ├── invoice_logic.py      ← Totals, due amount calculations
-│   ├── pdf_generator.py      ← Builds PDF using ReportLab
-│   └── printer.py            ← Sends PDF to Windows printer
-├── database/
-│   ├── __init__.py
-│   ├── db.py                 ← All SQLite operations (CRUD)
-│   └── invoices.db           ← Auto-created on first run
+├── build.bat                        ← One-click PyInstaller .exe builder
+├── main.py                          ← Entry point — launches the app window
+├── requirements.txt                 ← pip packages list
+├── SKILL.md                         ← Project knowledge base (this file)
+│
 ├── assets/
-│   ├── logo.png              ← Twickenham Health circular logo
-│   └── fonts/                ← Custom fonts for PDF output
-├── requirements.txt          ← pip packages list
-└── build.bat                 ← One-click PyInstaller .exe builder
+│   └── twickenham_health_logo.png   ← Company logo (used in topbar + PDF)
+│
+├── database/
+│   ├── db.py                        ← All SQLite operations (CRUD)
+│   ├── invoices.db                  ← Auto-created on first run
+│   └── __init__.py
+│
+├── logic/
+│   ├── invoice_logic.py             ← Totals, due date, currency calculations
+│   ├── pdf_generator.py             ← Builds invoice PDF using ReportLab
+│   ├── records_report.py            ← Builds records report PDF
+│   └── __init__.py
+│
+├── output/                          ← Generated PDFs saved here (auto-created)
+│   └── *.pdf
+│
+├── tests/
+│   └── generate_pdf_test.py
+│
+└── ui/
+    ├── customer_manager.py          ← Customer add/edit/delete screen
+    ├── dashboard.py                 ← Home screen: records table + toolbar
+    ├── invoice_form.py              ← New / Edit invoice entry form
+    ├── invoice_view.py              ← Read-only view of a single invoice
+    └── __init__.py
 ```
+> ⚠️ Always work inside `twickenham_health/` only. The `twickenham_health - Copy/` sibling folder is a backup — never edit it.
 
 
 
