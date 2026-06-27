@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v2.9 (Production Ready)
+v3.1 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -52,7 +52,14 @@ twickenham_health/
 ├── SKILL.md                         ← Project knowledge base (this file)
 │
 ├── assets/
-│   └── twickenham_health_logo.png   ← Company logo (used in topbar + PDF)
+│   ├── twickenham_health_logo.png   ← Company logo (used in topbar + PDF)
+│   └── icons/                       ← Toolbar button icons (16×16 PNG)
+│       ├── icon_customer.png
+│       ├── icon_new_invoice.png
+│       ├── icon_open_invoice.png
+│       ├── icon_generate_pdf.png
+│       ├── icon_print-record.png    ← Note: hyphen not underscore
+│       └── icon_delete_record.png
 │
 ├── database/
 │   ├── db.py                        ← All SQLite operations (CRUD)
@@ -95,11 +102,12 @@ Sort Code      : 04-00-03
 
 
 
-## Customer Details (Fixed — Always the Same)
+## Customer Details (Default — Seeded on First Run)
 ```
 Customer Name  : Allen Street Clinic
 Address        : Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom
 ```
+> Customers are now managed via the Customer Manager screen. Never hardcode customer name anywhere in code.
 
 
 
@@ -136,7 +144,7 @@ CREATE TABLE IF NOT EXISTS invoices (
 );
 ```
 - `customer_id` is a FK to `customers.id` (LEFT JOIN — **never hardcode customer name anywhere**)
-- `get_all_invoices()` always returns records ordered by `inv_no COLLATE NOCASE ASC` (A→Z) — do not change to `created_at DESC`
+- `get_all_invoices()` always returns records ordered by `inv_no COLLATE NOCASE ASC` (A→Z)
 - `get_all_invoices()` and `get_invoice_by_id()` both JOIN customers and return:
   `customer_name`, `customer_address`, `customer_contact`
 - All UI files must use `inv["customer_name"]` — never the string "Allen Street Clinic"
@@ -158,15 +166,15 @@ CREATE TABLE IF NOT EXISTS customers (
 
 ### Table: sessions
 ```sql
-CREATE TABLE sessions (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    invoice_id  INTEGER NOT NULL,
-    sr_no       INTEGER NOT NULL,
-    activity    TEXT DEFAULT 'Locum GP session',
-    job_date    TEXT NOT NULL,
-    hour_rate   REAL NOT NULL,
-    work_hours  TEXT NOT NULL,   -- e.g. "Duty Session" or "3"
-    session_total REAL NOT NULL,
+CREATE TABLE IF NOT EXISTS sessions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    invoice_id    INTEGER NOT NULL,
+    sr_no         INTEGER NOT NULL,
+    activity      TEXT    NOT NULL DEFAULT 'Locum GP session',
+    job_date      TEXT    NOT NULL,
+    hour_rate     REAL    NOT NULL DEFAULT 0.0,
+    work_hours    TEXT    NOT NULL DEFAULT 'Duty Session',
+    session_total REAL    NOT NULL DEFAULT 0.0,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
 );
 ```
@@ -176,18 +184,24 @@ CREATE TABLE sessions (
 ## UI Screens & Navigation
 
 ### 1. Dashboard (dashboard.py)
-- Toolbar buttons: New Invoice | Open | Generate PDF | Print | Delete
-- Records table columns: ☐ | Invoice No. | Invoice Date | Due Date | Customer | Sessions | Net Amount | Due Amount | Status
-- First column is a **checkbox column** (`"check"`) for multi-selection:
-  - Header shows `☐` / `☑` — clicking it toggles ALL rows on/off (select-all / deselect-all)
-  - Header auto-updates to `☑` when every row is individually checked, back to `☐` when any is unchecked
-  - Clicking a row's checkbox cell toggles `☐` / `☑` for that row only
-  - Checked IDs are stored in `self._checked` (a `set` of string iids); `self._all_checked` (bool) tracks header state
-  - `_checked_ids()` returns a `list[int]` of all checked database IDs
-  - Double-clicking the checkbox column is ignored (does not open invoice)
-  - Single-row selection via `_selected_id()` is fully independent and untouched
-  - `self._checked` is preserved across `refresh()` calls — checked state survives data reloads
-  - Column width: `30px`, non-stretching, no sort on click
+- **Topbar specs (do not change without being asked):**
+  - Height: `78px`
+  - Logo size: `(52, 52)` px
+  - "Twickenham Health Limited" font: `Segoe UI 14 bold`
+  - "Locum GP Invoice Manager" font: `Segoe UI 10`
+- **Toolbar** (bottom, white bg matching statusbar, thin MID_GREY separator above):
+  - Search box on the LEFT
+  - Buttons on the RIGHT: Customers | New Invoice | Open Invoice | Generate PDF | Print Records | Delete Records
+  - Button style: navy bg, white text, `relief="groove"`, `bd=2`, `overrelief="ridge"`
+  - Icon-to-label spacing: 1 space (`f" {text}"`)
+  - Icons loaded from `assets/icons/` at 16×16px using `os.path.abspath(__file__)`
+  - Icon filenames (exact — do not rename):
+    - `icon_customer.png`, `icon_new_invoice.png`, `icon_open_invoice.png`
+    - `icon_generate_pdf.png`, `icon_print-record.png`, `icon_delete_record.png`
+  - Requires `import os` and `from PIL import Image, ImageTk`
+- **Build order in `__init__`**: `_build_topbar()` → `_build_statusbar()` → `_build_toolbar()` → `_build_table()`
+- **Records table columns:**
+  - ☐ checkbox | Invoice No. | Invoice Date | Due Date | Customer | Sessions | Net Amount | Due Amount | Status
 - **Column widths (do not change without being asked):**
   | Column       | Width | Anchor   | Stretch |
   |--------------|-------|----------|---------|
@@ -200,94 +214,89 @@ CREATE TABLE sessions (
   | Net Amount   | 110px | e (right)| No      |
   | Due Amount   | 110px | e (right)| No      |
   | Status       | 95px  | center   | No      |
+- **Checkbox column behaviour:**
+  - Header `☐/☑` toggles ALL rows (select-all / deselect-all)
+  - Individual row click toggles that row only
+  - Header syncs to `☑` only when all rows are checked
+  - `self._checked` (set of iids) preserved across `refresh()` calls
+  - `_checked_ids()` returns `list[int]` of checked DB IDs
+  - Double-click on checkbox column is ignored
 - **Print button behaviour:**
-  - If any checkboxes are ticked → prints only those checked invoices
-  - If no checkboxes are ticked → falls back to the single selected row
-  - Confirmation dialog shows the mode clearly (`X checked invoice(s)` or `1 selected invoice (THL-GP###)`)
-- Row hover actions: Eye (view) | PDF | Print | Edit
-- Status bar: Total invoices | Paid | Pending | Total earned
-- Search bar: filter by invoice no., date, or customer
-- **Topbar specs (do not change without being asked):**
-  - Height: `78px`
-  - Logo size: `(52, 52)` px
-  - "Twickenham Health Limited" font: `Segoe UI 14 bold`
-  - "Locum GP Invoice Manager" font: `Segoe UI 10`
+  - Checked rows → prints only those invoices
+  - Nothing checked → falls back to single selected row
+- **Status bar:** Total invoices | Paid | Pending | Total earned (white bg)
 
 ### 2. Invoice Form (invoice_form.py)
 - Fields: Invoice No. (manual), Invoice Date, Due Date, Ref (optional)
-- Bill To: pre-filled, read-only (Allen Street Clinic)
+- Bill To: `ttk.Combobox` dropdown populated from `customers` table
+  - Selecting customer auto-fills Address and Contact (read-only)
+  - `_reload_customers(select_name=)` fetches fresh data from DB
+  - `customer_id` passed to `db.save_invoice()` and `db.update_invoice()`
+  - Pre-selects correct customer when editing existing invoice
 - Sessions table: Sr. | Activity | Session/Job Date | Hour Rate | Working Hours | Session Total
 - Add Session / Remove Session buttons
 - Auto-calculates Net Amount and Due Amount live
-- Save button validates: invoice no. required, at least 1 session required
+- Save validates: invoice no. required, at least 1 session required
 
 ### 3. Invoice View (invoice_view.py)
 - Read-only display of all invoice fields and sessions
-- Action buttons: Generate PDF | Print | Edit | Mark as Paid | Delete
-- Delete triggers confirmation dialog first
+- Shows real `customer_name` and `customer_address` from DB — never hardcoded
+- **Topbar:** logo + title only — no buttons in topbar
+- **Bottom toolbar** (light grey bg, MID_GREY separator above, buttons right-aligned):
+  - Button order left→right: Edit | Generate PDF | Mark as Paid/Pending | Delete | Close
+  - All buttons: navy bg, white text, `relief="groove"`, `bd=2`
+  - `_update_mark_button()` keeps navy colour for both paid/pending states
+- Print button removed — use dashboard Print Records instead
 
-### 4. Delete Confirmation Dialog
-- Shows invoice summary (no., customer, date, amount)
-- Warning: action cannot be undone
-- Buttons: Cancel | Yes, Delete Invoice
-
-### 5. Customer Manager (ui/customer_manager.py)
-- Accessed via **👥 Customers** button in dashboard toolbar
+### 4. Customer Manager (ui/customer_manager.py)
+- Accessed via Customers button in dashboard toolbar
 - Split layout: customer list table (left) + add/edit form (right)
 - Fields: Customer Name (required) | Address (multi-line) | Contact
 - Actions: Save Customer | Clear | Delete (enabled only when editing)
 - On first run, Allen Street Clinic is seeded as the default customer
-- **Back to Dashboard** button at bottom toolbar
-- Customer count shown in bottom-right status label
+- Back to Dashboard button at bottom toolbar
 
-### 6. Bill To dropdown (invoice_form.py)
-- **Bill To** card now uses a dropdown (`ttk.Combobox`) populated from `customers` table
-- Selecting a customer auto-fills Address and Contact fields (read-only)
-- `_reload_customers()` fetches fresh data from DB each time the form loads
-- Customer name, address, contact stored in `self._customer_var`, `self._customer_map`
-- Opens generated PDF in Windows default viewer
-- Or prints directly via printer.py
+### 5. Bill To dropdown (invoice_form.py)
+- See Invoice Form § above
 
 
 
-## PDF Invoice Layout (Must Match Sample)
-Replicate exactly — in this order top to bottom:
+## PDF Invoice Layout
+Order top to bottom:
 1. Top navy blue bar (full width)
 2. Logo (left) + Company name & address (right, navy blue)
 3. "Invoice to Customer" heading (centered, underlined)
 4. Bill To block (left) + Invoice No./Date/Due Date (right, bold values)
-5. Sessions table with navy header row:
-   Sr. | Activity | Session/Job Date | Session/Hour Rate | Working Hours | Session Total
+5. Sessions table with navy header row
 6. Ref. (left) + Net Amount / Due Amount (right, bold)
-7. Bank Details section (Bank Name, Account No., Sort/Branch Code)
-8. Footer note: "* This is system generated invoice doesn't require signature and stamp."
+7. Bank Details section
+8. Footer note
 9. Bottom navy blue bar (full width)
 
+PDF metadata:
+- `title` = `"Twickenham Health — {inv_no}"` (shows in PDF viewer tab)
+- `author` = `"Twickenham Health Limited"`
+
 PDF colours:
-- Navy header/footer bar : #1a2c4e
-- Table header background : #1a2c4e
-- Table header text       : #ffffff
-- Body text               : #000000
-- Bold values             : #000000 bold
+- Navy bar/header : #1a2c4e
+- Body text       : #000000
+- Bold values     : #000000 bold
 
 
 
 ## Window Layout (main.py)
-- Window size is calculated dynamically from screen resolution at startup
-- **4% padding on all four sides** — no hard-coded pixel dimensions
-- Bottom padding = `screen_h × 4% + 40px` to exclude the Windows taskbar (40px)
+- 4% padding on all four sides
+- Bottom padding = `screen_h × 4% + 40px` (Windows taskbar clearance)
 - Formula:
   ```
   pad_x    = screen_w × 0.04
   pad_top  = screen_h × 0.04
-  pad_bot  = screen_h × 0.04 + 40   ← taskbar clearance
+  pad_bot  = screen_h × 0.04 + 40
   target_w = screen_w − pad_x × 2
   target_h = screen_h − pad_top − pad_bot
   pos_x    = pad_x
   pos_y    = pad_top
   ```
-- `minsize` is set equal to `target_w × target_h` (window is not resizable smaller)
-- Do **not** revert to percentage-based sizing (e.g. `0.85 × screen`) — the 4% padding rule is intentional
 
 
 
@@ -295,7 +304,7 @@ PDF colours:
 - All UI classes inherit from `tk.Frame`
 - Database calls go only through `database/db.py` — never inline SQL in UI files
 - PDF generation only in `logic/pdf_generator.py`
-- `generate_pdf(invoice)` reads `invoice["customer_name"]` and `invoice["customer_address"]` from the DB — never hardcoded
+- `generate_pdf(invoice)` reads `invoice["customer_name"]` and `invoice["customer_address"]` from DB
 - Falls back to `CUSTOMER_NAME` / `CUSTOMER_ADDR` constants only if DB value is missing
 - Use f-strings for formatting
 - Date format in UI  : DD-Mon-YYYY (e.g. 26-Dec-2025)
@@ -323,40 +332,41 @@ pause
 
 ## Common Tasks & Where to Edit
 
-| Task                        | File to edit                    |
-|-----------------------------|---------------------------------|
-| Change company details      | This SKILL.md + pdf_generator.py|
-| Change customer details      | invoice_form.py + pdf_generator.py |
-| Add a new UI screen         | ui/ folder + main.py navigation |
-| Change invoice calculations | logic/invoice_logic.py          |
-| Change PDF layout           | logic/pdf_generator.py          |
-| Add a database column       | database/db.py (schema + queries)|
-| Change invoice number format| invoice_form.py + db.py         |
-| Change bank details         | This SKILL.md + pdf_generator.py|
-| Change status options       | dashboard.py + db.py            |
-| Change window size/padding  | main.py (Window Layout section) |
-| Add / edit customers        | ui/customer_manager.py          |
-| Change customer dropdown    | ui/invoice_form.py (_bill_to_card) |
-| Add customer DB columns     | database/db.py (schema + queries) |
+| Task                          | File to edit                         |
+|-------------------------------|--------------------------------------|
+| Change company details        | This SKILL.md + pdf_generator.py     |
+| Change customer details       | ui/customer_manager.py               |
+| Add a new UI screen           | ui/ folder + main.py navigation      |
+| Change invoice calculations   | logic/invoice_logic.py               |
+| Change PDF layout             | logic/pdf_generator.py               |
+| Add a database column         | database/db.py (schema + queries)    |
+| Change invoice number format  | invoice_form.py + db.py              |
+| Change bank details           | This SKILL.md + pdf_generator.py     |
+| Change status options         | dashboard.py + db.py                 |
+| Change window size/padding    | main.py (Window Layout section)      |
+| Add / edit customers          | ui/customer_manager.py               |
+| Change customer dropdown      | ui/invoice_form.py (_bill_to_card)   |
+| Change toolbar icons          | assets/icons/ + dashboard.py         |
+| Change PDF tab title          | logic/pdf_generator.py (SimpleDocTemplate title=) |
 
 
 
 ## Git Commit Convention
-- Always use **separate commits per file**, never bundle multiple files in one commit
-- Always use **separate `git push`** after each commit
-- Format:
-  ```bash
-  git add <file>
-  git commit -m "<type>: <description>"
-  git push
-
+- **PowerShell single push all:** `git add -A; git commit -m "message"; git push`
+- For separate commits per file:
+  ```powershell
   git add <file>
   git commit -m "<type>: <description>"
   git push
   ```
+
+
+
+## Things Claude Must Never Change Without Being Asked
 - Company name, address, phone, reg number
 - Bank details (MONZO, 99909112, 04-00-03)
-- Customer name and address (Allen Street Clinic)
 - Invoice number prefix (THL-GP)
 - PDF layout order and navy colour scheme
-- Dashboard topbar height, logo size, and font sizes (see UI Screens § 1)
+- Dashboard topbar height, logo size, and font sizes
+- Dashboard column widths
+- Icon filenames in assets/icons/
