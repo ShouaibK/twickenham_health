@@ -4,7 +4,7 @@ from datetime import datetime
 
 from database import db
 from logic.invoice_logic import format_currency, format_date_for_display
-from logic.pdf_generator import generate_and_open, generate_and_print
+from logic.pdf_generator import generate_and_open
 from ui import load_logo_image
 
 
@@ -43,6 +43,7 @@ class InvoiceView(tk.Frame):
         self.invoice    = None
 
         self._build_topbar()
+        self._build_bottom_toolbar()
 
         self._canvas = tk.Canvas(self, bg=LIGHT_GREY,
                                  highlightthickness=0)
@@ -86,20 +87,32 @@ class InvoiceView(tk.Frame):
 
         right = tk.Frame(bar, bg=NAVY)
         right.pack(side="right", padx=14)
-        self._btn(right, "✖  Close",        self.on_close,
-                  bg=NAVY, fg=WHITE, bd=1,
-                  hl="#aab8cc").pack(side="left", padx=4)
-        self._btn(right, "✎  Edit",         self._on_edit,
-                  bg=WHITE, fg=TEXT_DARK).pack(side="left", padx=4)
-        self._btn(right, "📤  Generate PDF", self.generate_pdf,
-                  bg=GREEN, fg=WHITE).pack(side="left", padx=4)
-        self._btn(right, "🖨  Print",        self.print_invoice,
-                  bg=WHITE, fg=TEXT_DARK).pack(side="left", padx=4)
-        self._mark_btn = self._btn(right, "Mark as Paid", self._toggle_paid,
-                                   bg=GREEN, fg=WHITE)
-        self._mark_btn.pack(side="left", padx=4)
-        self._btn(right, "🗑  Delete",       self._delete_invoice,
-                  bg=WHITE, fg=RED).pack(side="left", padx=4)
+
+    def _build_bottom_toolbar(self):
+        tk.Frame(self, bg=MID_GREY, height=1).pack(side="bottom", fill="x")
+        bar = tk.Frame(self, bg=LIGHT_GREY, pady=5)
+        bar.pack(side="bottom", fill="x")
+
+        def btn(text, cmd):
+            b = tk.Button(
+                bar, text=text, command=cmd,
+                fg=WHITE, bg=NAVY,
+                font=FONT_NORMAL,
+                relief="groove", bd=2,
+                padx=12, pady=5,
+                cursor="hand2",
+                activebackground="#243d6b",
+                activeforeground=WHITE,
+                overrelief="ridge",
+            )
+            b.pack(side="right", padx=4, pady=4)
+            return b
+
+        btn("✖  Close",        self.on_close)
+        btn("🗑  Delete",       self._delete_invoice)
+        self._mark_btn = btn("Mark as Paid", self._toggle_paid)
+        btn("📤  Generate PDF", self.generate_pdf)
+        btn("✎  Edit",         self._on_edit)
 
     def _build_body(self):
         self._info_card = self._card(self._body, "Invoice Summary")
@@ -252,9 +265,9 @@ class InvoiceView(tk.Frame):
 
     def _update_mark_button(self, status):
         if status == "paid":
-            self._mark_btn.config(text="Mark as Pending", bg=RED)
+            self._mark_btn.config(text="Mark as Pending", bg=NAVY, fg=WHITE)
         else:
-            self._mark_btn.config(text="Mark as Paid", bg=GREEN)
+            self._mark_btn.config(text="Mark as Paid", bg=NAVY, fg=WHITE)
 
     def _delete_invoice(self):
         if not self.invoice:
@@ -286,15 +299,6 @@ class InvoiceView(tk.Frame):
                                 f"PDF saved and opened:\n{result}")
         else:
             messagebox.showerror("PDF Error", result)
-
-    def print_invoice(self):
-        if not self.invoice:
-            return
-        ok, result = generate_and_print(self.invoice)
-        if ok:
-            messagebox.showinfo("Print", "Invoice sent to printer.")
-        else:
-            messagebox.showerror("Print Error", result)
 
     def _on_body_configure(self, event):
         self._canvas.configure(scrollregion=self._canvas.bbox("all"))
