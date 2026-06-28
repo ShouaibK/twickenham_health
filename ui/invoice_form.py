@@ -4,6 +4,7 @@ from datetime import datetime
 
 from database import db
 from logic.invoice_logic import (
+    SESSION_TYPES,
     calculate_session_total,
     calculate_totals,
     format_currency,
@@ -16,6 +17,20 @@ from logic.invoice_logic import (
     build_session_list,
 )
 from ui import load_logo_image
+
+
+def _get_work_hours(session_type, hours_val):
+    """
+    Convert session type + hours input to the work_hours string for DB/calc.
+    - Duty Session - Morning / Evening → returns the type string as-is
+    - Hour Based → returns "X Hours" (e.g. "3 Hours")
+    """
+    if session_type == "Hour Based":
+        h = str(hours_val).strip()
+        if h:
+            return f"{h} Hours"
+        return "0 Hours"
+    return session_type  # "Duty Session - Morning" or "Duty Session - Evening"
 
 # ──────────────────────────────────────────────
 #  COLOURS & FONTS
@@ -77,7 +92,6 @@ class InvoiceForm(tk.Frame):
         if self.invoice_id:
             self._load_invoice(self.invoice_id)
         else:
-            self._add_session_row()
             self._add_session_row()
 
     # ──────────────────────────────────────────
@@ -270,8 +284,9 @@ class InvoiceForm(tk.Frame):
         hdr = tk.Frame(self._sessions_outer, bg=NAVY)
         hdr.pack(fill="x", pady=(0, 4))
         for text, w in [("Sr.", 4), ("Activity", 22),
-                        ("Job Date", 12), ("Hour Rate £", 10),
-                        ("Working Hours", 13), ("Session Total", 11), ("", 3)]:
+                        ("Job Date", 12), ("Rate £", 10),
+                        ("Session Type", 18), ("Hours", 8),
+                        ("Session Total", 11), ("", 3)]:
             tk.Label(hdr, text=text, bg=NAVY, fg=WHITE,
                      font=FONT_SMALL, width=w,
                      anchor="center").pack(side="left", padx=2, pady=4)
@@ -355,12 +370,41 @@ class InvoiceForm(tk.Frame):
                 e.insert(0, val)
             return e
 
-        act   = entry(22, data.get("activity",   "Locum GP session") if data else "Locum GP session")
-        jdate = entry(12, data.get("job_date",   today_str())        if data else today_str())
-        rate  = entry(10, str(data.get("hour_rate",  350))           if data else "350")
-        hours = entry(13, str(data.get("work_hours", "Duty Session")) if data else "Duty Session")
+        act   = entry(22, data.get("activity",  "Locum GP session") if data else "Locum GP session")
+        jdate = entry(12, data.get("job_date",  today_str())        if data else today_str())
 
-        # Session total (read-only)
+        # Default rate depends on session type
+        default_rate = str(data.get("hour_rate", 350)) if data else "350"
+        rate  = entry(10, default_rate)
+
+        # Determine saved session type and hours
+        saved_wh = str(data.get("work_hours", "Duty Session - Morning")).strip() if data else "Duty Session - Morning"
+        if saved_wh.lower().endswith("hours"):
+            saved_type  = "Hour Based"
+            saved_hours = saved_wh.lower().replace("hours", "").strip()
+        elif saved_wh.lower().startswith("duty session"):
+            saved_type  = saved_wh  # "Duty Session - Morning" or "Duty Session - Evening"
+            saved_hours = ""
+        else:
+            saved_type  = "Duty Session - Morning"
+            saved_hours = ""
+
+        # Session Type dropdown
+        type_var = tk.StringVar(value=saved_type)
+        type_cb  = ttk.Combobox(row_frame, textvariable=type_var,
+                                 values=SESSION_TYPES,
+                                 state="readonly", width=18,
+                                 font=FONT_NORMAL)
+        type_cb.pack(side="left", padx=2, ipady=3)
+
+        # Hours entry (only visible when Hour Based)
+        hours_var = tk.StringVar(value=saved_hours)
+        hours_entry = tk.Entry(row_frame, textvariable=hours_var,
+                               font=FONT_NORMAL, relief="solid",
+                               bd=1, width=8)
+        hours_entry.pack(side="left", padx=2, ipady=3)
+
+        # Session total (read-only) — must exist before _recalc_this_row
         total_var = tk.StringVar(value="£0.00")
         total_lbl = tk.Label(row_frame, textvariable=total_var,
                              bg=LIGHT_GREY, fg=TEXT_DARK,
@@ -368,32 +412,67 @@ class InvoiceForm(tk.Frame):
                              relief="solid", bd=1)
         total_lbl.pack(side="left", padx=2, ipady=3)
 
-        # Delete button
         row_data = {
-            "frame": row_frame,
-            "act":   act,
-            "jdate": jdate,
-            "rate":  rate,
-            "hours": hours,
-            "total": total_var,
+            "frame":     row_frame,
+            "act":       act,
+            "jdate":     jdate,
+            "rate":      rate,
+            "type_var":  type_var,
+            "hours_var": hours_var,
+            "total":     total_var,
         }
-        del_btn = self._btn(row_frame, "✖", lambda rd=row_data: self._remove_row(rd),
+
+        # Define _recalc_this_row FIRST so update_hours_visibility can call it
+        def _recalc_this_row(*_):
+            try:
+                r   = float(rate.get() or 0)
+                wh  = _get_work_hours(type_var.get(), hours_var.get())
+                tot = calculate_session_total(r, wh)
+                total_var.set(format_currency(tot))
+            except Exception:
+                total_var.set("£0.00")
+            if hasattr(self, "_net_label"):
+                self._recalc()
+
+        # Show/hide hours entry and set default rate based on type
+        def update_hours_visibility(*_):
+            if type_var.get() == "Hour Based":
+                hours_entry.config(state="normal", bg=WHITE)
+                # Only set default if field is empty or was a duty session default
+                if not data and rate.get().strip() in ("350", ""):
+                    rate.delete(0, "end")
+                    rate.insert(0, "95")
+            else:
+                hours_var.set("")
+                hours_entry.config(state="disabled", bg=LIGHT_GREY)
+                # Only set default if field is empty or was hour based default
+                if not data and rate.get().strip() in ("95", ""):
+                    rate.delete(0, "end")
+                    rate.insert(0, "350")
+            _recalc_this_row()
+
+        type_cb.bind("<<ComboboxSelected>>", update_hours_visibility)
+        update_hours_visibility()  # set initial state
+        del_btn = self._btn(row_frame, "✖",
+                            lambda rd=row_data: self._remove_row(rd),
                             bg=WHITE, fg=RED, bd=0)
         del_btn.pack(side="left", padx=2)
 
         # Bind recalc
-        for widget in (rate, hours):
-            widget.bind("<KeyRelease>", lambda e: self._recalc())
-            widget.bind("<FocusOut>",   lambda e: self._recalc())
+        rate.bind("<KeyRelease>", _recalc_this_row)
+        rate.bind("<FocusOut>",   _recalc_this_row)
+        hours_var.trace_add("write", _recalc_this_row)
+
+        self._session_rows.append(row_data)
 
         # Set initial total
         if data:
             total_var.set(format_currency(data.get("session_total", 0)))
         else:
-            self._recalc_row(row_data)
+            _recalc_this_row()
 
-        self._session_rows.append(row_data)
-        self._recalc()
+        if hasattr(self, "_net_label"):
+            self._recalc()
 
     def _remove_row(self, row_data):
         if len(self._session_rows) <= 1:
@@ -416,7 +495,8 @@ class InvoiceForm(tk.Frame):
                 "activity":      rd["act"].get(),
                 "job_date":      rd["jdate"].get(),
                 "hour_rate":     rd["rate"].get(),
-                "work_hours":    rd["hours"].get(),
+                "work_hours":    _get_work_hours(rd["type_var"].get(),
+                                                 rd["hours_var"].get()),
                 "session_total": 0,
             }
             self._add_session_row(saved)
@@ -427,9 +507,10 @@ class InvoiceForm(tk.Frame):
 
     def _recalc_row(self, row_data):
         try:
-            rate  = float(row_data["rate"].get() or 0)
-            hours = row_data["hours"].get().strip()
-            total = calculate_session_total(rate, hours)
+            rate = float(row_data["rate"].get() or 0)
+            wh   = _get_work_hours(row_data["type_var"].get(),
+                                   row_data["hours_var"].get())
+            total = calculate_session_total(rate, wh)
             row_data["total"].set(format_currency(total))
         except Exception:
             row_data["total"].set("£0.00")
@@ -488,7 +569,8 @@ class InvoiceForm(tk.Frame):
                 "activity":   rd["act"].get().strip(),
                 "job_date":   rd["jdate"].get().strip(),
                 "hour_rate":  rd["rate"].get().strip(),
-                "work_hours": rd["hours"].get().strip(),
+                "work_hours": _get_work_hours(rd["type_var"].get(),
+                                              rd["hours_var"].get()),
             }
             for rd in self._session_rows
         ]
