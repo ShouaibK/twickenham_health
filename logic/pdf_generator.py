@@ -232,10 +232,10 @@ def generate_pdf(invoice: dict) -> str:
     heading_style = ParagraphStyle(
         "Heading",
         fontName=_poppins_bold(),
-        fontSize=24,
+        fontSize=20,
         textColor=BLACK,
         alignment=TA_CENTER,
-        leading=30,
+        leading=26,
     )
     story.append(Paragraph("<u>Invoice to Customer</u>", heading_style))
     story.append(Spacer(1, 10*mm))
@@ -261,7 +261,7 @@ def generate_pdf(invoice: dict) -> str:
     footer_style = ParagraphStyle(
         "Footer",
         fontName=_calibri(),
-        fontSize=7,
+        fontSize=9,
         textColor=TEXT_GREY,
         alignment=TA_LEFT,
     )
@@ -299,10 +299,10 @@ def _company_header(doc):
     name_style = ParagraphStyle(
         "CName",
         fontName=_poppins_bold(),
-        fontSize=12,
+        fontSize=11,
         textColor=NAVY,
         alignment=TA_RIGHT,
-        leading=16,
+        leading=15,
     )
     detail_style = ParagraphStyle(
         "CDetail",
@@ -345,25 +345,25 @@ def _bill_to_block(inv_no, inv_date, due_date, cust_name, cust_address, doc):
     normal = ParagraphStyle(
         "BillNorm",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
-        leading=16,
+        leading=18,
     )
     label_style = ParagraphStyle(
         "MetaLabel",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
         alignment=TA_LEFT,
-        leading=18,
+        leading=20,
     )
     bold_val = ParagraphStyle(
         "MetaVal",
         fontName=_calibri_bold(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
         alignment=TA_RIGHT,
-        leading=18,
+        leading=20,
     )
 
     # Split address into lines
@@ -413,34 +413,34 @@ def _sessions_table(sessions, doc):
     th = ParagraphStyle(
         "TH",
         fontName=_calibri_bold(),
-        fontSize=10,
+        fontSize=12,
         textColor=WHITE,
         alignment=TA_CENTER,
-        leading=13,
+        leading=15,
     )
     td = ParagraphStyle(
         "TD",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
         alignment=TA_LEFT,
-        leading=13,
+        leading=15,
     )
     tdc = ParagraphStyle(
         "TDC",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
         alignment=TA_CENTER,
-        leading=13,
+        leading=15,
     )
     tdr = ParagraphStyle(
         "TDR",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
         alignment=TA_RIGHT,
-        leading=13,
+        leading=15,
     )
 
     col_widths = [14*mm, 52*mm, 28*mm, 26*mm, 30*mm, 26*mm]
@@ -490,24 +490,24 @@ def _totals_block(ref, net_amt, due_amt, doc):
     norm = ParagraphStyle(
         "TotNorm",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
     )
     label_r = ParagraphStyle(
         "TotLabel",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
         alignment=TA_RIGHT,
-        leading=20,
+        leading=22,
     )
     bold_r = ParagraphStyle(
         "TotBold",
         fontName=_calibri_bold(),
-        fontSize=11,
+        fontSize=12,
         textColor=BLACK,
         alignment=TA_RIGHT,
-        leading=20,
+        leading=22,
     )
 
     totals = Table(
@@ -545,15 +545,15 @@ def _bank_details(doc):
     bold = ParagraphStyle(
         "BankBold",
         fontName=_calibri_bold(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
     )
     norm = ParagraphStyle(
         "BankNorm",
         fontName=_calibri(),
-        fontSize=10,
+        fontSize=12,
         textColor=BLACK,
-        leading=16,
+        leading=18,
     )
 
     header = Paragraph(
