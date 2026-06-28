@@ -245,18 +245,19 @@ class CustomerManager(tk.Frame):
         bar = tk.Frame(self, bg=WHITE, pady=6)
         bar.pack(side="bottom", fill="x")
 
+        # Customer count label on far right
+        self._count_lbl = tk.Label(bar, text="", bg=WHITE,
+                                    fg=TEXT_MID, font=FONT_SMALL)
+        self._count_lbl.pack(side="right", padx=14)
+
+        # Back to Dashboard after Delete — on the right
         tk.Button(bar, text="← Back to Dashboard",
                   command=self.on_close,
                   bg=WHITE, fg=TEXT_DARK, font=FONT_NORMAL,
                   relief="flat", bd=0, padx=10, pady=4,
                   cursor="hand2",
                   activebackground=LIGHT_GREY,
-                  activeforeground=TEXT_DARK).pack(side="left", padx=10)
-
-        # Customer count label on right
-        self._count_lbl = tk.Label(bar, text="", bg=WHITE,
-                                    fg=TEXT_MID, font=FONT_SMALL)
-        self._count_lbl.pack(side="right", padx=14)
+                  activeforeground=TEXT_DARK).pack(side="right", padx=4)
 
     # ──────────────────────────────────────────
     #  DATA LOADING

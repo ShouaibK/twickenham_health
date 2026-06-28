@@ -2,6 +2,16 @@ from datetime import datetime, timedelta
 
 
 # ──────────────────────────────────────────────
+#  SESSION TYPE OPTIONS (used in UI dropdown)
+# ──────────────────────────────────────────────
+SESSION_TYPES = [
+    "Duty Session - Morning",
+    "Duty Session - Evening",
+    "Hour Based",
+]
+
+
+# ──────────────────────────────────────────────
 #  DATE HELPERS
 # ──────────────────────────────────────────────
 
@@ -16,7 +26,7 @@ def default_due_date_str():
     If that date falls on a Saturday (weekday=5) → shift to Monday (+2).
     If it falls on a Sunday  (weekday=6) → shift to Monday (+1).
     """
-    due = datetime.today() + timedelta(days=20)
+    due = datetime.today() + timedelta(days=14)
     if due.weekday() == 5:    # Saturday
         due += timedelta(days=2)
     elif due.weekday() == 6:  # Sunday
@@ -34,7 +44,7 @@ def calculate_due_date_str(invoice_date_str):
         inv_date = datetime.strptime(invoice_date_str, "%Y-%m-%d")
     except ValueError:
         return default_due_date_str()
-    due = inv_date + timedelta(days=20)
+    due = inv_date + timedelta(days=14)
     if due.weekday() == 5:    # Saturday → Monday
         due += timedelta(days=2)
     elif due.weekday() == 6:  # Sunday → Monday
@@ -76,10 +86,17 @@ def calculate_session_total(hour_rate, work_hours):
     """
     Calculate the total for one session row.
 
-    Rules (from SKILL.md):
-      - If work_hours is numeric  →  rate × hours
-      - If work_hours is text
-        (e.g. 'Duty Session')    →  rate as-is (flat fee)
+    Rules:
+      - "Duty Session - Morning" → rate as-is (flat fee)
+      - "Duty Session - Evening" → rate as-is (flat fee)
+      - "Hour Based"             → not used directly; hours stored separately
+      - Numeric string (e.g. "3") → rate × hours (Hour Based result)
+      - Any other text           → rate as-is (fallback flat fee)
+
+    work_hours can be:
+      - "Duty Session - Morning" or "Duty Session - Evening" → flat
+      - "3 Hours", "4 Hours", etc. → parse numeric part × rate
+      - A plain number string → rate × hours
 
     Returns a float.
     """
@@ -88,11 +105,28 @@ def calculate_session_total(hour_rate, work_hours):
     except (ValueError, TypeError):
         return 0.0
 
+    if not work_hours:
+        return round(rate, 2)
+
+    wh = str(work_hours).strip()
+
+    # Duty session types → flat fee
+    if wh.lower().startswith("duty session"):
+        return round(rate, 2)
+
+    # "X Hours" format (e.g. "3 Hours", "04 Hours")
+    if wh.lower().endswith("hours"):
+        try:
+            hours = float(wh.lower().replace("hours", "").strip())
+            return round(rate * hours, 2)
+        except (ValueError, TypeError):
+            return round(rate, 2)
+
+    # Plain numeric
     try:
-        hours = float(work_hours)
+        hours = float(wh)
         return round(rate * hours, 2)
     except (ValueError, TypeError):
-        # Non-numeric work_hours → flat rate
         return round(rate, 2)
 
 

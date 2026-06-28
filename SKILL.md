@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v3.1 (Production Ready)
+v3.2 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -113,13 +113,23 @@ Address        : Allen Street, Stoke-On-Trent ST10 1HJ, United Kingdom
 
 ## Invoice Rules
 - Invoice number format : THL-GP### (user types manually e.g. THL-GP041)
-- Due date              : Always 20 days after invoice date (can be edited manually)
-                          If the 20th day falls on Saturday → shifted to Monday (+2 days)
-                          If the 20th day falls on Sunday   → shifted to Monday (+1 day)
+- Due date              : Always 14 days after invoice date (can be edited manually)
+                          If the 14th day falls on Saturday → shifted to Monday (+2 days)
+                          If the 14th day falls on Sunday   → shifted to Monday (+1 day)
                           Logic lives in `calculate_due_date_str()` in invoice_logic.py
                           `default_due_date_str()` applies same rule from today's date
-- Session total         : If Working Hours is numeric → rate × hours
-                          If Working Hours is "Duty Session" → rate as-is
+- Session type        : Dropdown with 3 options (SESSION_TYPES constant in invoice_logic.py):
+                          1. "Duty Session - Morning" → rate as-is (flat fee)
+                          2. "Duty Session - Evening" → rate as-is (flat fee)
+                          3. "Hour Based"             → rate × hours (hours entered manually)
+- Session total         : Duty Session types → rate as-is
+                          Hour Based → rate × hours
+                          Hours stored as "X Hours" (e.g. "3 Hours") in DB
+                          PDF shows exactly: "Duty Session - Morning" / "3 Hours"
+- Rate field            : Manual input, default changes with session type:
+                          Duty Session - Morning/Evening → default £350
+                          Hour Based                    → default £95
+                          Auto-updates only if user hasn't manually changed it
 - Net Amount            : Sum of all session totals
 - Due Amount            : Always equals Net Amount (no tax/VAT)
 - Invoice prefix        : THL-GP (never changes)
@@ -233,7 +243,11 @@ CREATE TABLE IF NOT EXISTS sessions (
   - `_reload_customers(select_name=)` fetches fresh data from DB
   - `customer_id` passed to `db.save_invoice()` and `db.update_invoice()`
   - Pre-selects correct customer when editing existing invoice
-- Sessions table: Sr. | Activity | Session/Job Date | Hour Rate | Working Hours | Session Total
+- Sessions table: Sr. | Activity | Job Date | Rate £ | Session Type | Hours | Session Total
+  - **Session Type** is a `ttk.Combobox` with: `Duty Session - Morning`, `Duty Session - Evening`, `Hour Based`
+  - **Hours** entry is only enabled when `Hour Based` is selected; disabled (grey) for duty sessions
+  - `_get_work_hours(type, hours)` converts to DB string: `"Duty Session - Morning"` or `"3 Hours"`
+  - `SESSION_TYPES` constant in `invoice_logic.py` defines the dropdown options
 - Add Session / Remove Session buttons
 - Auto-calculates Net Amount and Due Amount live
 - Save validates: invoice no. required, at least 1 session required
