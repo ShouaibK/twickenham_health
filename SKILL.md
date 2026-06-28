@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v3.2 (Production Ready)
+v3.3 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -53,6 +53,9 @@ twickenham_health/
 │
 ├── assets/
 │   ├── twickenham_health_logo.png   ← Company logo (used in topbar + PDF)
+│   ├── fonts/                       ← Custom fonts for PDF output
+│   │   ├── Poppins-Regular.ttf      ← Used in company header + Invoice heading
+│   │   └── Poppins-Bold.ttf         ← Used in company header + Invoice heading
 │   └── icons/                       ← Toolbar button icons (16×16 PNG)
 │       ├── icon_customer.png
 │       ├── icon_new_invoice.png
@@ -268,7 +271,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 - Fields: Customer Name (required) | Address (multi-line) | Contact
 - Actions: Save Customer | Clear | Delete (enabled only when editing)
 - On first run, Allen Street Clinic is seeded as the default customer
-- Back to Dashboard button at bottom toolbar
+- Bottom toolbar: `← Back to Dashboard` and `Total customers: N` on the RIGHT side
 
 ### 5. Bill To dropdown (invoice_form.py)
 - See Invoice Form § above
@@ -277,15 +280,23 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 ## PDF Invoice Layout
 Order top to bottom:
-1. Top navy blue bar (full width)
-2. Logo (left) + Company name & address (right, navy blue)
-3. "Invoice to Customer" heading (centered, underlined)
-4. Bill To block (left) + Invoice No./Date/Due Date (right, bold values)
-5. Sessions table with navy header row
-6. Ref. (left) + Net Amount / Due Amount (right, bold)
-7. Bank Details section
-8. Footer note
-9. Bottom navy blue bar (full width)
+1. Top navy bar (thin, ~4mm)
+2. Company header: logo (30×30mm, left) + company name/address (right, Poppins, navy)
+3. "Invoice to Customer" heading (Poppins Bold 24pt, centered, underlined)
+4. Bill To block (left: customer name + address lines) + Invoice meta (right: 3-col label|colon|bold value)
+5. Sessions table with navy header row (Calibri 10pt)
+6. Ref. (left) + Net Amount / Due Amount (right, Calibri Bold 11pt, spacer between)
+7. Bank Details ("Bank Details:" bold inline + 3 rows)
+8. Footer note (Calibri 7pt, grey)
+9. Bottom navy bar (thin, ~4mm)
+
+PDF fonts:
+- **Company header + "Invoice to Customer" heading** → Poppins / Poppins-Bold
+  - Loaded from `assets/fonts/Poppins-Regular.ttf` and `assets/fonts/Poppins-Bold.ttf`
+  - Falls back to Helvetica if files not found
+- **Everything else** → Calibri / Calibri-Bold
+  - Loaded from `C:\Windows\Fonts\calibri.ttf` (Windows system font)
+  - Falls back to Helvetica if not found
 
 PDF metadata:
 - `title` = `"Twickenham Health — {inv_no}"` (shows in PDF viewer tab)
@@ -294,7 +305,13 @@ PDF metadata:
 PDF colours:
 - Navy bar/header : #1a2c4e
 - Body text       : #000000
-- Bold values     : #000000 bold
+- Grey footer     : #555555
+
+Sessions table columns (Calibri Bold header, Calibri body):
+- Sr. | Activity | Session/Job Date | Session/Hour Rate | Working Hours | Session Total
+- Column widths: 14 | 52 | 28 | 26 | 30 | 26 mm
+- Working Hours shows full text: `"Duty Session - Morning"` / `"Duty Session - Evening"` / `"3 Hours"`
+- Alternating white/light-grey rows, no side borders
 
 
 
@@ -318,8 +335,8 @@ PDF colours:
 - All UI classes inherit from `tk.Frame`
 - Database calls go only through `database/db.py` — never inline SQL in UI files
 - PDF generation only in `logic/pdf_generator.py`
-- `generate_pdf(invoice)` reads `invoice["customer_name"]` and `invoice["customer_address"]` from DB
-- Falls back to `CUSTOMER_NAME` / `CUSTOMER_ADDR` constants only if DB value is missing
+- `generate_pdf(invoice)` reads `invoice["customer_name"]` and `invoice["customer_address"]` from DB — never hardcoded
+- PDF fonts: Poppins for header/heading, Calibri for body — both fall back to Helvetica
 - Use f-strings for formatting
 - Date format in UI  : DD-Mon-YYYY (e.g. 26-Dec-2025)
 - Date format in DB  : YYYY-MM-DD (ISO format)
@@ -361,6 +378,7 @@ pause
 | Add / edit customers          | ui/customer_manager.py               |
 | Change customer dropdown      | ui/invoice_form.py (_bill_to_card)   |
 | Change toolbar icons          | assets/icons/ + dashboard.py         |
+| Change PDF fonts              | assets/fonts/ + pdf_generator.py (_register_fonts) |
 | Change PDF tab title          | logic/pdf_generator.py (SimpleDocTemplate title=) |
 
 
@@ -381,6 +399,7 @@ pause
 - Bank details (MONZO, 99909112, 04-00-03)
 - Invoice number prefix (THL-GP)
 - PDF layout order and navy colour scheme
+- PDF fonts (Poppins for header/heading, Calibri for body)
 - Dashboard topbar height, logo size, and font sizes
 - Dashboard column widths
 - Icon filenames in assets/icons/
