@@ -6,7 +6,7 @@ description: "Use this skill whenever working on the Twickenham Health Limited L
 # Twickenham Health — Locum GP Invoice App Skill
 
 ## Version
-v3.3 (Production Ready)
+v3.5 (Production Ready)
 
 ## ⚠️ Mandatory First Step
 **At the start of every conversation involving this project — or whenever project context is unclear — Claude MUST read this SKILL.md file in full before writing, editing, or suggesting any code.**
@@ -307,7 +307,23 @@ PDF colours:
 - Body text       : #000000
 - Grey footer     : #555555
 
-Sessions table columns (Calibri Bold header, Calibri body):
+PDF font sizes (do not change without being asked):
+| Section | Font | Size |
+|---|---|---|
+| Company name | Poppins-Bold | 11pt |
+| Company address/phone/reg | Poppins | 8pt |
+| "Invoice to Customer" heading | Poppins-Bold | 20pt |
+| Bill To — customer name & address | Calibri | 12pt |
+| Bill To — meta labels | Calibri | 12pt |
+| Bill To — meta values (bold) | Calibri-Bold | 12pt |
+| Sessions table header | Calibri-Bold | 12pt |
+| Sessions table body | Calibri | 12pt |
+| Totals — Net/Due labels | Calibri | 12pt |
+| Totals — Net/Due values (bold) | Calibri-Bold | 12pt |
+| Ref. label | Calibri | 12pt |
+| Bank Details header line | Calibri-Bold | 12pt |
+| Bank Details rows | Calibri | 12pt |
+| Footer note | Calibri | 9pt |
 - Sr. | Activity | Session/Job Date | Session/Hour Rate | Working Hours | Session Total
 - Column widths: 14 | 52 | 28 | 26 | 30 | 26 mm
 - Working Hours shows full text: `"Duty Session - Morning"` / `"Duty Session - Evening"` / `"3 Hours"`
